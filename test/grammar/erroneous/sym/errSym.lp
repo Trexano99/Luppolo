@@ -1,3 +1,3 @@
 MyFunction(){
-    return 1
+    return as
 }
