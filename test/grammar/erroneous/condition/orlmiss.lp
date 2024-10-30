@@ -1,0 +1,3 @@
+MyFunction(){
+    if true or {}
+}

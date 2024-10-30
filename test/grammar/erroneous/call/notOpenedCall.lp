@@ -1,0 +1,3 @@
+MyFunction(){
+    return A)
+}
