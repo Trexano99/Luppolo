@@ -1,0 +1,6 @@
+*.txt
+*.bat
+*.pdf
+bin/
+*__pycache__/
+data/
