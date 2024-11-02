@@ -9,15 +9,19 @@ class BaseLuppNode(Tree, ABC):
     '''
 
     @abstractmethod
-    def __init__(self, name, children = None):
+    def __init__(self, name, children : list = None):
         '''
         This method initializes the BaseLuppNode object.
         The method takes the following parameters:
         - name: the name of the node.
-        - children: the children of the node.
+        - children: the children of the node. Should be a list of BaseLuppNode, if not it will be converted to a list.
         '''
+        self.children = [children] if type(children) is not list else children
+        for child in self.children:
+            assert isinstance(child, BaseLuppNode), "Children must be of type BaseLuppNode"
+            child.parent = self
         self.name = name
-        self.children = children if children is not None else []
+        
 
     def getGraphRapresentation(self, graph, attributes = None):
         '''
@@ -27,7 +31,6 @@ class BaseLuppNode(Tree, ABC):
         - attributes: the attributes of the node.
         Return the id of the node
         '''
-         
         graphNode = GraphLuppNode(self)
         if attributes is not None:
             for attribute in attributes:
@@ -48,5 +51,6 @@ class BaseLuppNode(Tree, ABC):
     
     def addChild(self, child):
         ''' Add a child to the node. Set the parent of the child to this current node'''
+        assert isinstance(child, BaseLuppNode), "Children must be of type BaseLuppNode"
         child.parent = self
         self.children.append(child)
