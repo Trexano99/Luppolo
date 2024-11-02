@@ -25,7 +25,7 @@ class Function(BaseLuppNode):
 
     def getGraphRapresentation(self, graph, attributes=None):     
         if attributes is None: attributes = []
-        attributes.append(("Name", self.funcName.name))
+        attributes.append(("Name", self.funcName.value))
         attributes.append(("Params", self.getParamsAsString()))
         return super().getGraphRapresentation(graph, attributes)
         
@@ -34,4 +34,4 @@ class Function(BaseLuppNode):
     
     def getParamsAsString(self):
         '''Return the list of parameters as a string'''
-        return "".join([f"{param.name}, " for param in self.funcParams])[:-2]
+        return "".join([f"{param.value}, " for param in self.funcParams])[:-2]
