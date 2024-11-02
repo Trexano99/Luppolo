@@ -15,4 +15,4 @@ class ID(BaseFinal):
         '''
         assert (varName is not None), "varName cannot be None"
         assert (varName[0].isupper()), "varName must start with an uppercase letter"
-        super().__init__(self.__NODE_varName, varName)
+        super().__init__(self.__NODE_NAME, varName)
