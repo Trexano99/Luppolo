@@ -1,4 +1,5 @@
 
+from src.ast.elements import FuncCall
 from src.ast.elements.final.BaseFinal import BaseFinal
 from src.ast.BaseLuppNode import BaseLuppNode
 from src.ast.elements.final.ID import ID
@@ -29,7 +30,7 @@ class BinOp(BaseExpr):
             - left: the left operand of the binary operation.
             - right: the right operand of the binary operation.
             '''
-            supportedChildTypes = [ID, BaseFinal]
+            supportedChildTypes = [BaseFinal, FuncCall]
             assert(type(left) in supportedChildTypes), "Left operand must be an expression or a final element"
             assert(type(right) in supportedChildTypes), "Right operand must be an expression or a final element"
             super().__init__(self.__NODE_NAME, [left, right])
