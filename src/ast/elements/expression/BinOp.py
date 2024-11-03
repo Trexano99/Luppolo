@@ -22,7 +22,7 @@ class BinOp(BaseExpr):
             DIV = "/"
             POW = "^"
     
-        def __init__(self, op:BinOpType, left:BaseLuppNode, right:BaseLuppNode):
+        def __init__(self, left:BaseLuppNode, op:BinOpType, right:BaseLuppNode):
             '''
             This method initializes the BinOp object.
             The method takes the following parameters:

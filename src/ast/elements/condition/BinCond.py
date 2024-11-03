@@ -18,7 +18,7 @@ class BinCond(BaseCond):
             GREATER = ">"
             GEQ = ">="
     
-        def __init__(self, op:BinCondType, left:BaseExpr, right:BaseExpr):
+        def __init__(self, left:BaseExpr, op:BinCondType, right:BaseExpr):
             '''
             This method initializes the BinCond object.
             The method takes the following parameters:
