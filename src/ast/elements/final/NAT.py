@@ -15,4 +15,4 @@ class NAT(BaseFinal):
         '''
         assert (value is not None), "value cannot be None"
         assert (value.isnumeric()), "value must be a number"
-        super().__init__(self.__NODE_value, value)
+        super().__init__(self.__NODE_NAME, value)
