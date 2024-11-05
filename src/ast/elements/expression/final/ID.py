@@ -1,7 +1,6 @@
 
 
-from src.ast.BaseLuppNode import BaseLuppNode
-from src.ast.elements.final.BaseFinal import BaseFinal
+from src.ast.elements.expression.final.BaseFinal import BaseFinal
 
 class ID(BaseFinal):
 

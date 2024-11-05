@@ -1,13 +1,11 @@
-
-
 from abc import ABC
-from src.ast.BaseLuppNode import BaseLuppNode
+from src.ast.elements.expression.BaseExpr import BaseExpr
 
-class BaseFinal(BaseLuppNode, ABC):
+class BaseFinal(BaseExpr, ABC):
         '''
         This class rapresent the abstraction of a final leaf node of the AST.
         '''
-        
+
         def __init__(self, name, value):
             '''
             This method initializes the BaseFinal object.

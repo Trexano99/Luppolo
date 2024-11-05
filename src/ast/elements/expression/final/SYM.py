@@ -1,7 +1,6 @@
 
 
-from src.ast.BaseLuppNode import BaseLuppNode
-from src.ast.elements.final.BaseFinal import BaseFinal
+from src.ast.elements.expression.final.BaseFinal import BaseFinal
 
 class SYM(BaseFinal):
 
@@ -16,4 +15,4 @@ class SYM(BaseFinal):
         assert (name is not None), "Name cannot be None"
         assert (len(name)==1), "Name must be a single character"
         assert (name[0].islower()), "Name must start with an uppercase letter"
-        super().__init__(self.__NODE_NAME, name, [])
+        super().__init__(self.__NODE_NAME, name)
