@@ -1,7 +1,7 @@
 
 from src.ast.elements.expression.BaseExpr import BaseExpr
 from src.ast.elements.instruction.BaseInstr import BaseInstr
-from src.ast.elements.final.ID import ID
+from src.ast.elements.expression.final.ID import ID
 
 class Assignment(BaseInstr):
     '''
@@ -23,7 +23,8 @@ class Assignment(BaseInstr):
 
     def getGraphRapresentation(self, graph, attributes=None):     
         if attributes is None: attributes = []
-        attributes.append(("ID", self.varName.name))
+        attributes.append(("VarName", self.varName.value))
+        attributes.append(("VarType", self.varName.name))
         return super().getGraphRapresentation(graph, attributes)
         
     def getPayload(self):
