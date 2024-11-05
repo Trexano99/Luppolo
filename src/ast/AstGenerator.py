@@ -1,4 +1,5 @@
 
+from src.ast.elements.expression.BinOp import BinOp
 from src.ast.elements.instruction.IfElse import IfElse
 from src.ast.elements.instruction.Foreach import Foreach
 from src.ast.elements.instruction.Return import Return
@@ -6,11 +7,16 @@ from src.ast.elements.instruction.Repeat import Repeat
 from src.ast.elements.instruction.While import While
 from src.ast.elements.instruction.Assignment import Assignment
 from src.ast.elements.InstrBlock import InstrBlock
-from src.ast.elements.final.ID import ID
+from src.ast.elements.expression.final.ID import ID
+from src.ast.elements.expression.final.NAT import NAT
+from src.ast.elements.expression.final.SYM import SYM
 from bin.grammar.syntax.luppoloParser import luppoloParser
 from bin.grammar.syntax.luppoloVisitor import luppoloVisitor
 from src.ast.elements.Program import Program
 from src.ast.elements.Function import Function
+from src.ast.elements.FuncCall import FuncCall
+from src.ast.elements.condition.BinCond import BinCond
+from src.ast.elements.condition.TrueFalse import TrueFalse
 
 class AstGenerator(luppoloVisitor):
     '''
@@ -20,31 +26,26 @@ class AstGenerator(luppoloVisitor):
     '''
     
     def visitProgram(self, ctx: luppoloParser.ProgramContext):
-        '''
-        This method visits the Program node of the raw tree and generates the AST.
-        The method takes the following parameters:
-        - ctx: the Program node of the raw tree.
-        The method returns the AST.
-        '''
         functions = ctx.children[:-1]
         return Program([self.visit(child) for child in functions])
     
 
     def visitFunction(self, ctx: luppoloParser.FunctionContext):
-        return Function(ID(ctx.children[0].getText()), self.visit(ctx.children[2]), self.visit(ctx.children[4]))
+        if len(ctx.children) == 4: # No parameters
+            return Function(self.visit(ctx.children[0]), [], self.visit(ctx.children[3]))
+        return Function(self.visit(ctx.children[0]), self.visit(ctx.children[2]), self.visit(ctx.children[4]))
     
     def visitParameter_list(self, ctx: luppoloParser.Parameter_listContext):
-        return [ID(child.getText()) for child in ctx.children if child.getSymbol().type != luppoloParser.COMMA]
+        return [self.visit(child) for child in ctx.children if child.getSymbol().type != luppoloParser.COMMA]
     
     def visitBlock(self, ctx: luppoloParser.BlockContext):
         _,*instructions,_ = ctx.children
         return InstrBlock([self.visit(child) for child in instructions])
     
     def visitInstruction(self, ctx: luppoloParser.InstructionContext):
-        print("Instruction Children: ", ctx.children)
         match ctx.children[0].getText():
             case "foreach":
-                return Foreach(ID(ctx.children[1].getText()), self.visit(ctx.children[3]), self.visit(ctx.children[4]))
+                return Foreach(self.visit(ctx.children[1]), self.visit(ctx.children[3]), self.visit(ctx.children[4]))
             case "if":
                 visitedFalseBlock = self.visit(ctx.children[-1]) if len(ctx.children) == 5  else None
                 return IfElse(self.visit(ctx.children[1]), self.visit(ctx.children[2]), visitedFalseBlock)
@@ -54,9 +55,107 @@ class AstGenerator(luppoloVisitor):
                 return While(self.visit(ctx.children[1]), self.visit(ctx.children[2]))
             case "repeat":
                 return Repeat(self.visit(ctx.children[1]), self.visit(ctx.children[2]))
+            #Last case is the assignment
             case _:
-                return Assignment(ID(ctx.children[0].getText()), self.visit(ctx.children[2]))
+                return Assignment(self.visit(ctx.children[0]), self.visit(ctx.children[2]))
     
     def visitExpression(self, ctx: luppoloParser.ExpressionContext):
         print("Expression Children: ", ctx.children)
-        return super().visitExpression(ctx)
+        if isinstance(ctx.children[0], luppoloParser.ExpressionContext):
+            return BinOp(*[self.visit(child) for child in ctx.children])
+        if isinstance(ctx.children[0], luppoloParser.Function_callContext):
+            return self.visit(ctx.children[0])
+        print("Symbol type: ", ctx.children[0].getSymbol().type)
+        match ctx.children[0].getSymbol().type:
+            case luppoloParser.MINUS:
+                result = self.visit(ctx.children[1])
+                result.inverseNegation()
+                return result
+            # The case of the plus should not do anything special
+            case luppoloParser.LPAREN | luppoloParser.PLUS:
+                return self.visit(ctx.children[1])
+        
+        #Take all the case of the single expression element (NAT, ID, SYM, FUNC_CALL)
+        return self.visit(ctx.children[0])
+    
+    def visitCondition(self, ctx: luppoloParser.ConditionContext):
+        if isinstance(ctx.children[0], luppoloParser.ConditionContext):
+            return BinCond(*[self.visit(child) for child in ctx.children])
+        if isinstance(ctx.children[0], luppoloParser.Comparison_conditionContext):
+            return self.visit(ctx.children[0])
+        if ctx.children[0].getSymbol().type == luppoloParser.TRUE or ctx.children[0].getSymbol().type == luppoloParser.FALSE:
+            return self.visit(ctx.children[0])
+        
+        if ctx.children[0].getSymbol().type == luppoloParser.NOT:
+            result = self.visit(ctx.children[1])
+            result.inverseNegation()
+            return result
+        if ctx.children[0].getSymbol().type == luppoloParser.LPAREN:
+            return self.visit(ctx.children[1])
+        raise Exception(f"Condition not recognized: {ctx.children[0].getSymbol().type}")
+        
+    
+    def visitComparison_condition(self, ctx: luppoloParser.Comparison_conditionContext):
+        return BinCond(self.visit(ctx.children[0]), self.visit(ctx.children[1]), self.visit(ctx.children[2]))
+        
+    def visitFunction_call(self, ctx: luppoloParser.Function_callContext):
+        if len(ctx.children) == 3:
+            # No parameters
+            return FuncCall(self.visit(ctx.children[0]), [])
+        return FuncCall(self.visit(ctx.children[0]), self.visit(ctx.children[2]))
+    
+    def visitExpression_list(self, ctx: luppoloParser.Expression_listContext):
+        print("children: ", ctx.children)
+        return [self.visit(child) for i, child in enumerate(ctx.children) if i % 2 == 0]
+        
+    
+    def visitTerminal(self, node):
+
+        # Final element match
+        match node.getSymbol().type:
+            case luppoloParser.ID:
+                return ID(node.getText())
+            case luppoloParser.NAT:
+                return NAT(node.getText())
+            case luppoloParser.SYM:
+                return SYM(node.getText())
+        
+        # BinOp symbol match
+        match node.getSymbol().type:
+            case luppoloParser.PLUS:
+                return BinOp.BinOpType.SUM
+            case luppoloParser.MINUS:
+                return BinOp.BinOpType.SUB
+            case luppoloParser.TIMES:
+                return BinOp.BinOpType.MUL
+            case luppoloParser.DIV:
+                return BinOp.BinOpType.DIV
+            case luppoloParser.POW:
+                return BinOp.BinOpType.POW
+            
+        # BinCond symbol match
+        match node.getSymbol().type:
+            case luppoloParser.LEQ:
+                return BinCond.BinCondType.LEQ
+            case luppoloParser.LT:
+                return BinCond.BinCondType.LESS
+            case luppoloParser.EQ:
+                return BinCond.BinCondType.EQ
+            case luppoloParser.GT:
+                return BinCond.BinCondType.GREATER
+            case luppoloParser.GEQ:
+                return BinCond.BinCondType.GEQ
+            case luppoloParser.AND:
+                return BinCond.BinCondType.AND
+            case luppoloParser.OR:
+                return BinCond.BinCondType.OR
+            
+        # Condition TRUE and FALSE match
+        match node.getSymbol().type:
+            case luppoloParser.TRUE:
+                return TrueFalse(TrueFalse.TrueFalseType.TRUE)
+            case luppoloParser.FALSE:
+                return TrueFalse(TrueFalse.TrueFalseType.FALSE)
+
+
+        raise Exception(f"Terminal not recognized: {node.getSymbol().type}")
