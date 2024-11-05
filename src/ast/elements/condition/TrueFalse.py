@@ -1,5 +1,4 @@
 from src.ast.elements.condition.BaseCond import BaseCond
-from src.ast.elements.expression.BaseExpr import BaseExpr
 from enum import Enum
 
 class TrueFalse(BaseCond):
@@ -26,7 +25,7 @@ class TrueFalse(BaseCond):
 
         def getGraphRapresentation(self, graph, attributes=None):
             if attributes is None: attributes = []
-            attributes.append(("Value", self.value))
+            attributes.append(("Value", self.value.name))
             return super().getGraphRapresentation(graph, attributes)
         
         def getPayload(self):
