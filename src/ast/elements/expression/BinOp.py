@@ -1,8 +1,4 @@
-
-from src.ast.elements import FuncCall
-from src.ast.elements.final.BaseFinal import BaseFinal
 from src.ast.BaseLuppNode import BaseLuppNode
-from src.ast.elements.final.ID import ID
 from src.ast.elements.expression.BaseExpr import BaseExpr
 from enum import Enum
 
@@ -30,15 +26,14 @@ class BinOp(BaseExpr):
             - left: the left operand of the binary operation.
             - right: the right operand of the binary operation.
             '''
-            supportedChildTypes = [BaseFinal, FuncCall]
-            assert(type(left) in supportedChildTypes), "Left operand must be an expression or a final element"
-            assert(type(right) in supportedChildTypes), "Right operand must be an expression or a final element"
+            assert isinstance(left, BaseExpr), "Left operand must be of type BaseLuppNode"  
+            assert isinstance(right, BaseExpr), "Right operand must be of type BaseLuppNode"      
             super().__init__(self.__NODE_NAME, [left, right])
             self.op = op
     
         def getGraphRapresentation(self, graph, attributes=None):     
             if attributes is None: attributes = []
-            attributes.append(("Operator", self.op))
+            attributes.append(("Operator", self.op.value))
             return super().getGraphRapresentation(graph, attributes)
             
         def getPayload(self):
