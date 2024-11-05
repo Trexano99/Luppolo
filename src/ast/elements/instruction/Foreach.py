@@ -2,7 +2,7 @@
 from src.ast.elements.InstrBlock import InstrBlock
 from src.ast.elements.expression.BaseExpr import BaseExpr
 from src.ast.elements.instruction.BaseInstr import BaseInstr
-from src.ast.elements.final.ID import ID
+from src.ast.elements.expression.final.ID import ID
 
 class Foreach(BaseInstr):
     '''
@@ -20,11 +20,11 @@ class Foreach(BaseInstr):
         - expression: the expression to assign to the variable.
         - block: the block of instructions to execute.
         '''
-        super().__init__(self.__NODE_NAME, instrBlock)
+        super().__init__(self.__NODE_NAME, [expression, instrBlock])
         self.varName = varName
-        self.expression = expression
 
     def getGraphRapresentation(self, graph, attributes=None):
         if attributes is None: attributes = []
-        attributes.append(("ID", self.varName.name))
+        attributes.append(("VarName", self.varName.value))
+        attributes.append(("VarType", self.varName.name))
         return super().getGraphRapresentation(graph, attributes)
