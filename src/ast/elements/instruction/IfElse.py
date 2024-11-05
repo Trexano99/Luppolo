@@ -20,8 +20,11 @@ class IfElse(BaseInstr):
         - falseBlock: the block of instructions to execute if the condition is false.
         '''
         child = [condition, trueBlock]
+        condition.name = "CONDITION"
+        trueBlock.name = "TRUE_BLOCK"
         if falseBlock is not None:
             child.append(falseBlock)
+            falseBlock.name = "FALSE_BLOCK"
         super().__init__(self.__NODE_NAME, child)
     
     def getPayload(self):
