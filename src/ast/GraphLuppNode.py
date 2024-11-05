@@ -45,7 +45,8 @@ class GraphLuppNode():
         # Recursively add edges and develop the graph for child nodes
         for child in self.baseLuppNode.children:
             childId = child.getGraphRapresentation(graph)
-            graph.edge(self.nodeId, childId)
+            if childId is not None:
+                graph.edge(self.nodeId, childId)
         return self.nodeId
     
     def __constructNodeTable(self):
