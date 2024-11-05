@@ -1,5 +1,3 @@
-
-
 from src.ast.BaseLuppNode import BaseLuppNode
 from abc import ABC
 
@@ -28,5 +26,5 @@ class BaseExpr(BaseLuppNode, ABC):
 
     def getGraphRapresentation(self, graph, attributes=None):     
         if attributes is None: attributes = []
-        attributes.append(("Negated", self.negated))
+        attributes.append(("Negated Sign", self.negated))
         return super().getGraphRapresentation(graph, attributes)
