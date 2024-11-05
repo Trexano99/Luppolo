@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from antlr4.tree.Tree import Tree
 
 from src.ast.GraphLuppNode import GraphLuppNode
+from src.utils.LuppoloLogger import LuppoloLogger
 
 class BaseLuppNode(Tree, ABC):
     '''
@@ -16,6 +17,7 @@ class BaseLuppNode(Tree, ABC):
         - name: the name of the node.
         - children: the children of the node. Should be a list of BaseLuppNode, if not it will be converted to a list.
         '''
+        LuppoloLogger.logDebug("Creating node: "+name+" with children: "+str(children))
         self.children = [children] if type(children) is not list else children
         for child in self.children:
             assert isinstance(child, BaseLuppNode), "Children must be of type BaseLuppNode"
