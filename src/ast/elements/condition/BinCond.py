@@ -17,6 +17,8 @@ class BinCond(BaseCond):
             EQ = "=="
             GREATER = ">"
             GEQ = ">="
+            AND = "and"
+            OR = "or"
     
         def __init__(self, left:BaseExpr, op:BinCondType, right:BaseExpr):
             '''
@@ -31,7 +33,7 @@ class BinCond(BaseCond):
     
         def getGraphRapresentation(self, graph, attributes=None):     
             if attributes is None: attributes = []
-            attributes.append(("Operator", self.op))
+            attributes.append(("Operator", self.op.name))
             return super().getGraphRapresentation(graph, attributes)
             
         def getPayload(self):
