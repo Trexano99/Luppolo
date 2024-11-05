@@ -1,7 +1,7 @@
 
 from src.ast.elements.InstrBlock import InstrBlock
 from src.ast.BaseLuppNode import BaseLuppNode
-from src.ast.elements.final.ID import ID
+from src.ast.elements.expression.final.ID import ID
 
 class Function(BaseLuppNode):
     '''

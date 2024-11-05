@@ -1,5 +1,4 @@
 from src.ast.elements.expression.BaseExpr import BaseExpr
-from src.ast.elements.InstrBlock import InstrBlock
 from src.ast.elements.instruction.BaseInstr import BaseInstr
 
 class Return(BaseInstr):
