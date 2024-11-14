@@ -52,6 +52,20 @@ class BaseLuppExpr(GenericTreeNode):
     
     def expand(self):
         return self
+    
+    
+    def substitute(self, toBeSubstitue, substitute):
+        '''
+        This method is used to substitute a node with another node.
+        The method takes the following parameters:
+        - toBeSubstitue: the node to be substituted.
+        - substitute: the node to substitute.
+        '''
+        self.children = [child.substitute(toBeSubstitue, substitute) for child in self.children]
+        if self == toBeSubstitue:
+            return substitute
+        return self
+
 
     @staticmethod
     def baseSimpl(method):
@@ -66,7 +80,6 @@ class BaseLuppExpr(GenericTreeNode):
             return method(self, *args, **kwargs)
         return wrapper
     
-    
 
     @staticmethod
     def baseExpansion(method):
@@ -78,7 +91,7 @@ class BaseLuppExpr(GenericTreeNode):
             self.children = [child.expand() for child in self.children]
             return method(self, *args, **kwargs)
         return wrapper
-    
+
 
     def __lt__(self, other):
         '''
@@ -88,14 +101,7 @@ class BaseLuppExpr(GenericTreeNode):
             return self.children < other.children
         return self.type_priority[self.__class__.__name__] < self.type_priority[other.__class__.__name__]
 
-    type_priority = {
-            'Rational': 1,
-            'Mult': 2,
-            'Pow': 3,
-            'Symbol': 4,
-            'Add': 5
-        }
-    
+
     def __eq__(self, value: object) -> bool:
         return isinstance(value, BaseLuppExpr) and \
                type(self) == type(value) and \
@@ -104,3 +110,12 @@ class BaseLuppExpr(GenericTreeNode):
 
     def __hash__(self):
         return hash((self.name, tuple(self.children), self.negated))
+    
+    
+    type_priority = {
+            'Rational': 1,
+            'Mult': 2,
+            'Pow': 3,
+            'Symbol': 4,
+            'Add': 5
+        }
