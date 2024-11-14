@@ -77,6 +77,12 @@ class Add(BaseLuppExpr):
         # Se c'è un solo addendo, ritorna l'unico addendo
         if self.negated: children[0].inverseNegation()
         return children[0]
+    
+    @BaseLuppExpr.baseExpansion
+    def expand(self):
+        return Add(self.children, self.negated)
+    
+        
 
 class Mult(BaseLuppExpr):
 
@@ -160,6 +166,31 @@ class Mult(BaseLuppExpr):
         if self.negated: children[0].inverseNegation()
         return children[0]
     
+    @BaseLuppExpr.baseExpansion
+    def expand(self):
+        result = self.children[0]
+
+        for child in self.children[1:]:
+            firstElToMultiply = [result]
+            if isinstance(result, Add):
+                firstElToMultiply = result.children
+
+            secondElToMultiply = [child]
+            if isinstance(child, Add):
+                secondElToMultiply = child.children
+
+            elementsInProd = []  
+            for element in firstElToMultiply:
+                for secondElement in secondElToMultiply:
+                    elementsInProd.append(Mult([element, secondElement]).simplify())
+
+            result = Add(elementsInProd) if len(elementsInProd) > 1 else Mult(elementsInProd)
+
+        result.negated = self.negated
+        return result.simplify()
+        
+
+                
     
 class Pow(BaseLuppExpr):
 
@@ -197,4 +228,22 @@ class Pow(BaseLuppExpr):
                 return self.children[0] 
             
         return Pow(base, exponent, self.negated)
+    
+    @BaseLuppExpr.baseExpansion
+    def expand(self):
+        if not isinstance(self.children[1], Rational):
+            return Pow(self.children[0], self.children[1], self.negated)
+        rationalExponent = self.children[1]
+        
+        baseNotExpanded = Mult([self.children[0] for _ in range(abs(rationalExponent.numerator))])
+        newBase = baseNotExpanded.expand()
+
+        oldExponentSignNegated = (abs(rationalExponent.numerator) / rationalExponent.numerator) < 0
+
+        return Pow(newBase, Rational(1, rationalExponent.denominator, oldExponentSignNegated), self.negated).simplify()
+
+
+
+
+
     
