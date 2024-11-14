@@ -107,7 +107,6 @@ class Mult(BaseLuppExpr):
         children = []
         cumulatedFactor = Rational(1)
         sameBaseElements = {}
-        sameBasePow = {}
         for factor in self.children:
             # Se uno dei fattori è un prodotto, aggiungi i suoi figli
             if isinstance(factor, Mult):
@@ -119,17 +118,17 @@ class Mult(BaseLuppExpr):
 
             # Se uno dei fattori è una potenza, aggiungo la base e l'esponente alla lista delle potenze
             elif isinstance(factor, Pow):
-                if factor.children[0] in sameBasePow:
-                    sameBasePow[factor.children[0]].append(factor.children[1])
+                if (base:=factor.children[0]) in sameBaseElements:
+                    sameBaseElements[base].append(factor.children[1])
                 else:
-                    sameBasePow[factor.children[0]] = [factor.children[1]]
+                    sameBaseElements[base] = [factor.children[1]]
 
             # Altrimenti aggiungo il fattore alla lista degli elementi
             else:
                 if factor in sameBaseElements:
-                    sameBaseElements[factor] += 1
+                    sameBaseElements[factor].append(Rational(1))
                 else:
-                    sameBaseElements[factor] = 1
+                    sameBaseElements[factor] = [Rational(1)]
         
         # Se il prodotto dei fattori è zero, ritorna zero
         if cumulatedFactor.isZero():
@@ -137,22 +136,21 @@ class Mult(BaseLuppExpr):
         # Se il prodotto dei fattori non è uno, aggiungilo alla lista degli elementi
         elif not cumulatedFactor.isOne():
             children.append(cumulatedFactor)
+
+        print("Same base elements: ", sameBaseElements)
         
-        for element, freq in sameBaseElements.items():
+        for element, exponents in sameBaseElements.items():
+            exp = Add(exponents).simplify() if len(exponents) > 1 else exponents[0]
             # Se ci sono più elementi con la stessa base, aggiungo la rispettiva potenzas
-            if freq > 1:
-                children.append(Pow(element, Rational(freq)))
-            #Altrimenti li aggiungo direttamente
+            if isinstance(exp, Rational):
+                if exp.isZero():
+                    children.append(Rational(1))
+                elif exp.isOne():
+                    children.append(element)
+                else:
+                    children.append(Pow(element, exp))
             else:
-                children.append(element)
-        
-        for base, exponents in sameBasePow.items():
-            # Se ci sono più potenze con la stessa base, sommo gli esponenti
-            if len(exponents) > 1:
-                children.append(Pow(base, Add(exponents).simplify()))
-            #Altrimenti li aggiungo direttamente
-            else:
-                children.append(Pow(base, exponents[0]))
+                children.append(Pow(element, exp))
 
         # Se non abbiamo figli tutto è stato semplificato. Ritorna 1
         if len(children) == 0:
