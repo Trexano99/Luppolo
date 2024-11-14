@@ -50,6 +50,8 @@ class BaseLuppExpr(GenericTreeNode):
         
         return None
     
+    def expand(self):
+        return self
 
     @staticmethod
     def baseSimpl(method):
@@ -63,6 +65,20 @@ class BaseLuppExpr(GenericTreeNode):
                 return res
             return method(self, *args, **kwargs)
         return wrapper
+    
+    
+
+    @staticmethod
+    def baseExpansion(method):
+        '''
+        This wrapper is created to call the expand on all the children of the node
+        before calling the method passed as parameter.
+        '''
+        def wrapper(self, *args, **kwargs):
+            self.children = [child.expand() for child in self.children]
+            return method(self, *args, **kwargs)
+        return wrapper
+    
 
     def __lt__(self, other):
         '''
