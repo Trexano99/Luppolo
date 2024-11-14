@@ -55,7 +55,7 @@ class Rational(BaseLuppExpr):
         if isinstance(other, Rational):
             new_numerator = self.numerator * other.numerator
             new_denominator = self.denominator * other.denominator
-            return Rational(new_numerator, new_denominator)
+            return Rational(new_numerator, new_denominator, self.negated != other.negated)
         else:
             raise TypeError("Multiplication is only supported between Rational objects")
     
