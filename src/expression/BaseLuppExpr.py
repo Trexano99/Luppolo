@@ -98,7 +98,9 @@ class BaseLuppExpr(GenericTreeNode):
         This method is used to compare two nodes.
         '''
         if self.__class__.__name__ == other.__class__.__name__:
-            return self.children < other.children
+            if len(self.children)>0:
+                return self.children < other.children
+            return self.name < other.name
         return self.type_priority[self.__class__.__name__] < self.type_priority[other.__class__.__name__]
 
 
