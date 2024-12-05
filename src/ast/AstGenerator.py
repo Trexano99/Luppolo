@@ -60,12 +60,10 @@ class AstGenerator(luppoloVisitor):
                 return Assignment(self.visit(ctx.children[0]), self.visit(ctx.children[2]))
     
     def visitExpression(self, ctx: luppoloParser.ExpressionContext):
-        print("Expression Children: ", ctx.children)
         if isinstance(ctx.children[0], luppoloParser.ExpressionContext):
             return BinOp(*[self.visit(child) for child in ctx.children])
         if isinstance(ctx.children[0], luppoloParser.Function_callContext):
             return self.visit(ctx.children[0])
-        print("Symbol type: ", ctx.children[0].getSymbol().type)
         match ctx.children[0].getSymbol().type:
             case luppoloParser.MINUS:
                 result = self.visit(ctx.children[1])
