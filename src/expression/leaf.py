@@ -75,33 +75,34 @@ class Rational(BaseLuppExpr):
         Parameters:
         - other: the Rational object to multiply with.
         '''
-        if isinstance(other, Rational):
-            new_numerator = self.numerator * other.numerator
-            new_denominator = self.denominator * other.denominator
-            return Rational(new_numerator, new_denominator, self.negated != other.negated)
-        else:
+        if not isinstance(other, Rational):
             raise TypeError("Multiplication is only supported between Rational objects")
+        
+        new_numerator = self.numerator * other.numerator
+        new_denominator = self.denominator * other.denominator
+        return Rational(new_numerator, new_denominator, self.negated != other.negated)
+
+            
     
     def __add__(self, other):
         '''
         This method is used to add a rational number with another rational number.
         For the denominator, the method calculates the least common multiple between the two denominators
         and then calculates the new numerator accordingly.
-        Note that if the resulting numerator or denominator has decimal value them will be truncated
-        from the Rational object, giving an approximate value.
         Parameters:
         - other: the Rational object to add with.
         '''
-        if isinstance(other, Rational):
-            self_numerator = self.numerator if not self.negated else -self.numerator
-            other_numerator = other.numerator if not other.negated else -other.numerator
-            common_denominator = self.denominator * other.denominator // gcd(self.denominator, other.denominator)
-            adjusted_numerator_self = self_numerator * (common_denominator // self.denominator)
-            adjusted_numerator_other = other_numerator * (common_denominator // other.denominator)
-            new_numerator = adjusted_numerator_self + adjusted_numerator_other
-            return Rational(new_numerator, common_denominator)
-        else:
+        if not isinstance(other, Rational):
             raise TypeError("Addition is only supported between Rational objects")
+        
+        self_numerator = self.numerator if not self.negated else -self.numerator
+        other_numerator = other.numerator if not other.negated else -other.numerator
+        common_denominator = self.denominator * other.denominator // gcd(self.denominator, other.denominator)
+        adjusted_numerator_self = self_numerator * (common_denominator // self.denominator)
+        adjusted_numerator_other = other_numerator * (common_denominator // other.denominator)
+        new_numerator = adjusted_numerator_self + adjusted_numerator_other
+        return Rational(new_numerator, common_denominator)
+            
 
     def __pow__(self, other):
         '''
@@ -110,18 +111,21 @@ class Rational(BaseLuppExpr):
         Otherwise, the method returns a Rational object with the calculated numerator and denominator.
         Note that if the resulting numerator or denominator has decimal value them will be truncated
         from the Rational object, giving an approximate value.
+        The method return a tuple with the Rational object and a boolean that is True if the result is approximate.
         Parameters:
         - other: the Rational object to calculate the power with.
         '''
-        if isinstance(other, Rational):
-            expValue = other.numerator / other.denominator * (1 if not other.negated else -1)
-            numerator = self.numerator ** expValue
-            denominator = self.denominator ** expValue
-            if numerator / denominator == int(numerator / denominator):
-                return Rational(int(numerator / denominator))
-            return Rational(numerator, denominator)
-        else:
+        if not isinstance(other, Rational):
             raise TypeError("Power is only supported between Rational objects")
+        
+        expValue = other.numerator / other.denominator
+        numerator = self.numerator ** expValue
+        denominator = self.denominator ** expValue
+        approx = (numerator != int(numerator) or denominator != int(denominator))
+        
+        if other.negated:
+            return Rational(denominator, numerator), approx
+        return Rational(numerator, denominator), approx
         
     @BaseLuppExpr.baseDerive
     def derive(self, symbol):
