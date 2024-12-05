@@ -39,6 +39,10 @@ class LuppoloInterpreter:
         # Estraggo la funzione chiamata
         interpFunc : Function = next(func for func in self.functions if func.funcName.value == funcName)
         
+        if len([par.value for par in interpFunc.funcParams]) != len({par.value for par in interpFunc.funcParams}):
+            LuppoloLogger.logError(f"Function {funcName} has multiple parameters with the same name. Ambiguity is not allowed.")
+            raise LuppoloInterpException(funcMem)
+
         # Controllo che il numero di parametri passati alla funzione sia corretto
         if len(params) != len(expFuncParams := interpFunc.funcParams):
             error = f"Function {funcName} called with wrong number of parameters."
@@ -76,7 +80,7 @@ class LuppoloInterpreter:
                     # Se il nodo è già stato visitato, allora possiamo eseguire
                     # l'assegnamento prendendo il valore dallo stack 
                     if visited:
-                        ID_MEM[node.varName] = VALUE_STACK.pop()
+                        ID_MEM[node.value] = VALUE_STACK.pop()
                     
                     # Altrimenti dobbiamo visitare l'espessione 
                     else:
@@ -89,13 +93,13 @@ class LuppoloInterpreter:
                     # utilizzata dalla memoria. Non succede se la variabile era già
                     # presente prima di entrare nel ciclo. Vedi commenti sotto.
                     if visited:
-                        ID_MEM[node.varName] = None
+                        ID_MEM[node.value] = None
                     else:
                         # Se stiamo sovrascrivendo una variabile già esistente ci 
                         # salviamo come assegnamento il suo valore per ripristinarlo
                         # alla fine del ciclo. Non serve visitare nuovamente questo nodo
-                        if node.varName in ID_MEM:
-                            INSTR_STACK.append((Assignment(node.varName, ID_MEM[node.varName]), False))
+                        if node.value in ID_MEM:
+                            INSTR_STACK.append((Assignment(node.value, ID_MEM[node.value]), False))
                         # Altrimenti visitiamo nuovamente il nodo che rimuoverà 
                         # dalla memoria la variabile utilizzata
                         else:
@@ -105,7 +109,7 @@ class LuppoloInterpreter:
                         # ma prima andiamo ad assegnare il valore dell'espressione alla variabile
                         for exprEl in reversed(expr.children):
                             INSTR_STACK.append(block, False)
-                            INSTR_STACK.append((Assignment(node.varName, exprEl), False))
+                            INSTR_STACK.append((Assignment(node.value, exprEl), False))
                 
                 case "IfElse":
                     cond, trueBlock = node.children[:2]
@@ -162,18 +166,18 @@ class LuppoloInterpreter:
             ###############
                 
                 case "NAT":
-                    VALUE_STACK.append(Rational(node.value, negated=node.negated))
+                    VALUE_STACK.append(Rational(int(node.value), negated=node.negated))
 
                 case "SYM":
                     VALUE_STACK.append(Symbol(node.value, negated=node.negated))
                 
                 case "ID":
                     # Controllo che la variabile sia stata definita
-                    if node.varName not in ID_MEM:
-                        LuppoloLogger.logError(f"Variable {node.varName} not found.")
+                    if node.value not in ID_MEM:
+                        LuppoloLogger.logError(f"Variable {node.value} not found.")
                         raise LuppoloInterpException(funcMem)
                     
-                    VALUE_STACK.append(ID_MEM[node.varName].copy_with())
+                    VALUE_STACK.append(ID_MEM[node.value].copy_with())
 
                 case "BinOp":
                     # Se il nodo è già stato visitato, allora possiamo eseguire l'operazione
@@ -182,16 +186,16 @@ class LuppoloInterpreter:
                         right = VALUE_STACK.pop()
                         match node.op:
                             case BinOp.BinOpType.SUM:
-                                VALUE_STACK.append(Add(left, right, node.negated).simplify())
+                                VALUE_STACK.append(Add([left, right], node.negated).simplify())
                             case BinOp.BinOpType.SUB:
                                 right = right.copy_with(negated = not right.negated)
-                                VALUE_STACK.append(Add(left, right, node.negated).simplify())
+                                VALUE_STACK.append(Add([left, right], node.negated).simplify())
                             case BinOp.BinOpType.MUL:
-                                VALUE_STACK.append(Mult(left, right, node.negated).simplify())
+                                VALUE_STACK.append(Mult([left, right], node.negated).simplify())
                             case BinOp.BinOpType.DIV:
-                                VALUE_STACK.append(Mult(left, Pow(right, Rational(-1)), node.negated).simplify())
+                                VALUE_STACK.append(Mult([left, Pow(right, Rational(-1))], node.negated).simplify())
                             case BinOp.BinOpType.POW:
-                                VALUE_STACK.append(Pow(left, right, node.negated).simplify())
+                                VALUE_STACK.append(Pow([left, right], node.negated).simplify())
                     # Altrimenti dobbiamo visitare i figli. Aggiungiamo allo stack prima
                     # il nodo stesso, poi il nodo di sinistra e dunque il destro.
                     # Così nell'esecuzione verrà eseguito prima il destro e messo nello 
@@ -255,7 +259,7 @@ class LuppoloInterpreter:
                     # Altrimenti valutiamo i parametri e torniamo a visitare il nodo
                     else:
                         INSTR_STACK.append((node, True))
-                        for arg in node.args:
+                        for arg in node.children:
                             INSTR_STACK.append((arg, False))
                         
                 
