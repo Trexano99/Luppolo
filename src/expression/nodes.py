@@ -296,8 +296,11 @@ class Pow(BaseLuppExpr):
             sqare = "[" + str(exp.denominator) + "]" if exp.denominator != 2 else ""
             result += "\\sqrt"+sqare+"{" + base_latex + "}"
         else:
-            exponent_latex = exp.getLatexRapresentation() 
-            result += f"{base_latex}^{{{exponent_latex}}}"
+            if isinstance(exp,Rational) and exp.numerator == 1:
+                result += base_latex
+            else:
+                exponent_latex = exp.getLatexRapresentation() 
+                result += f"{base_latex}^{{{exponent_latex}}}"
 
         if notAsFraction or not self.children[1].negated:
             return result
