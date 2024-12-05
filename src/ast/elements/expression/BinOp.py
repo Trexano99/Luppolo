@@ -1,5 +1,6 @@
 from src.ast.BaseLuppNode import BaseLuppNode
 from src.ast.elements.expression.BaseExpr import BaseExpr
+from src.ast.elements.FuncCall import FuncCall
 from enum import Enum
 
 class BinOp(BaseExpr):
@@ -26,8 +27,8 @@ class BinOp(BaseExpr):
             - left: the left operand of the binary operation.
             - right: the right operand of the binary operation.
             '''
-            assert isinstance(left, BaseExpr), "Left operand must be of type BaseLuppNode"  
-            assert isinstance(right, BaseExpr), "Right operand must be of type BaseLuppNode"      
+            assert isinstance(left, BaseExpr) or isinstance(left, FuncCall), "Left operand must be of type BaseLuppNode or FunCall"  
+            assert isinstance(right, BaseExpr)or isinstance(right, FuncCall), "Right operand must be of type BaseLuppNode or FunCall"      
             super().__init__(self.__NODE_NAME, [left, right])
             self.op = op
     
