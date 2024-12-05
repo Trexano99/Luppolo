@@ -53,13 +53,18 @@ class BaseLuppExpr(GenericTreeNode):
         # Semplify to ractional if all children are rational
         if len(self.children) > 0 and all([child.__class__.__name__ == "Rational" for child in self.children]):
             
+            if self.__class__.__name__ == "Pow":
+                rationalResult, approx = self.children[0] ** self.children[1]
+                return rationalResult if not approx else None
+            
             operations = {
                 'Add': lambda x, y: x + y,
-                'Mult': lambda x, y: x * y,
-                'Pow': lambda x, y: x ** y
+                'Mult': lambda x, y: x * y
             }
             # Apply the operation to the children and get a rational result
             rationalResult = reduce(operations[self.__class__.__name__], self.children)
+
+                
             # If the node is negated, invert the negation on the result and call simplify
             return rationalResult.copy_with(negated = self.negated != rationalResult.negated).simplify()
         
