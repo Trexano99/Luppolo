@@ -20,31 +20,42 @@ class LuppoloInterpreter:
         '''
         This funciont is an iterative interpreter for a Luppolo function.
         '''
+
         # Il dizionario che mappa gli ID con i loro valori
         ID_MEM = {}
         # Lo stack dei nodi da eseguire. Tupla (nodo, vis), dove vis indica se i figli del nodo sono stati visitati
         INSTR_STACK = []
-        # Lo stack dei valori computati
+        # Lo stack dei valori computati. Possono essere espressioni o risultati di condizioni
         VALUE_STACK = []
 
+        # La memoria della funzione. Utilizzata per il log in caso di errore
+        funcMem = (ID_MEM, INSTR_STACK, VALUE_STACK)
+
         # Controllo che la funzione chiamata esista
-        if funcName not in self.functions:
-            LuppoloLogger.logError(err:=f"Function {funcName} not found.")
-            raise LuppoloInterpException(self)
+        if not any([funcName == func.funcName.value for func in self.functions]):
+            LuppoloLogger.logError(f"Function {funcName} not found.")
+            raise LuppoloInterpException(funcMem)
+        
+        # Estraggo la funzione chiamata
+        interpFunc : Function = next(func for func in self.functions if func.funcName.value == funcName)
         
         # Controllo che il numero di parametri passati alla funzione sia corretto
-        if len(params) != len(expFuncParams :=self.functions[funcName].funcParams):
+        if len(params) != len(expFuncParams := interpFunc.funcParams):
             error = f"Function {funcName} called with wrong number of parameters."
-            error += f"Expected {len(expFuncParams)} [{[param.value for param in expFuncParams]}]"
-            error += f", got {len(params)} [{params}]."
+            error += f"Expected {len(expFuncParams)} {[param.value for param in expFuncParams]}"
+            error += f", got {len(params)} {params}."
             
             LuppoloLogger.logError(error)
-            raise LuppoloInterpException(self)
+            raise LuppoloInterpException(funcMem)
         
-        interpFunc : Function = self.functions[funcName]
+        #Carico in memoria i parametri passati alla funzione
+        for param, value in zip(expFuncParams, params):
+            ID_MEM[param.value] = value
 
+        # Carico nello stack delle istruzioni le istruzioni della funzione
         INSTR_STACK = [(instr, False) for instr in reversed(interpFunc.children)]
 
+        # Ciclo finchè ci sono istruzioni da eseguire
         while INSTR_STACK:
             node, visited = INSTR_STACK.pop()
             match node.__class__.__name__:
@@ -118,7 +129,7 @@ class LuppoloInterpreter:
                     # segnalo l'errore e sollevo un'eccezione
                     if not expr.__class__.__name__ == "Rational" or expr.denominator != 1 or expr.negated:
                         LuppoloLogger.logError("Repeat expression must be a positive integer number.")
-                        raise LuppoloInterpException(self)
+                        raise LuppoloInterpException(funcMem)
                     
                     INSTR_STACK.extend([(block,False) for _ in range(expr.numerator)])
 
@@ -160,7 +171,7 @@ class LuppoloInterpreter:
                     # Controllo che la variabile sia stata definita
                     if node.varName not in ID_MEM:
                         LuppoloLogger.logError(f"Variable {node.varName} not found.")
-                        raise LuppoloInterpException(self)
+                        raise LuppoloInterpException(funcMem)
                     
                     VALUE_STACK.append(ID_MEM[node.varName].copy_with())
 
@@ -228,9 +239,9 @@ class LuppoloInterpreter:
                     VALUE_STACK.append(True if node.value == TrueFalse.TrueFalseType.TRUE else False)
 
                 
-            ##############
+            ############
             # FUNCCALL #
-            ##############  
+            ############
 
                 case "FuncCall":
                     
@@ -247,14 +258,18 @@ class LuppoloInterpreter:
                         for arg in node.args:
                             INSTR_STACK.append(arg, False)
                         
+                
+            #########
+            # ALTRO #
+            #########  
 
                 case _:
                     LuppoloLogger.logError(f"Node {node.__class__.__name__} not recognized to be interpretated.")
-                    raise LuppoloInterpException(self)
+                    raise LuppoloInterpException(funcMem)
                 
         # Se non è stato restituito nulla, allora la funzione non ha un return statement
         LuppoloLogger.logError(f"Function {funcName} has no return statement.")
-        raise LuppoloInterpException(self)
+        raise LuppoloInterpException(funcMem)
         
 
 
@@ -264,10 +279,11 @@ class LuppoloInterpException(Exception):
 
     verboseLog = True
     
-    def __init__(self,interpreter):
-        errorMessage = "An error occurred during the interpretation of the program. Read logs for more info"
+    def __init__(self,funcMem):
+        errorMessage = "An error occurred during the interpretation of the program. Read logs for more info.\n"
+        errorMessage += "Function memory at the time of the error:\n"
         if LuppoloInterpException.verboseLog:
-            errorMessage += f"ID_MEM: {interpreter.ID_MEM}\n"
-            errorMessage += f"INSTR_STACK: {interpreter.INSTR_STACK}\n"
-            errorMessage += f"VALUE_STACK: {interpreter.VALUE_STACK}\n"
+            errorMessage += f"ID_MEM: {funcMem[0]}\n"
+            errorMessage += f"INSTR_STACK: {funcMem[1]}\n"
+            errorMessage += f"VALUE_STACK: {funcMem[2]}\n"
         super().__init__(errorMessage)
