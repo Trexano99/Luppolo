@@ -99,7 +99,7 @@ class LuppoloInterpreter:
                         # Altrimenti visitiamo nuovamente il nodo che rimuoverà 
                         # dalla memoria la variabile utilizzata
                         else:
-                            INSTR_STACK.append(node, True)
+                            INSTR_STACK.append((node, True))
 
                         # Appendiamo per ogni elemento nell'espressione il blocco di istruzioni
                         # ma prima andiamo ad assegnare il valore dell'espressione alla variabile
@@ -114,13 +114,13 @@ class LuppoloInterpreter:
                     # e decidiamo quale blocco di istruzioni eseguire
                     if visited:
                         if VALUE_STACK.pop():
-                            INSTR_STACK.append(trueBlock, False)
+                            INSTR_STACK.append((trueBlock, False))
                         elif falseBlock is not None:
-                            INSTR_STACK.append(falseBlock, False)
+                            INSTR_STACK.append((falseBlock, False))
                     # Altrimenti valutiamo la condizione e torniamo a visitare il nodo
                     else:
-                        INSTR_STACK.append(node, True)
-                        INSTR_STACK.append(cond, False)
+                        INSTR_STACK.append((node, True))
+                        INSTR_STACK.append((cond, False))
             
                 case "Repeat":
                     expr, block = node.children
@@ -140,8 +140,8 @@ class LuppoloInterpreter:
                         return VALUE_STACK.pop()
                     # Altrimenti visitiamo l'espressione e torniamo a visitare il nodo
                     else:
-                        INSTR_STACK.append(node, True)
-                        INSTR_STACK.append(node.children[0], False)
+                        INSTR_STACK.append((node, True))
+                        INSTR_STACK.append((node.children[0], False))
                     
                 case "While":
                     cond, block = node.children
@@ -149,12 +149,12 @@ class LuppoloInterpreter:
                     if visited:
                         # Se la condizione è vera, allora eseguo il blocco e torno a rieseguire me stesso
                         if VALUE_STACK.pop():
-                            INSTR_STACK.append(node, False)
-                            INSTR_STACK.append(block, False)
+                            INSTR_STACK.append((node, False))
+                            INSTR_STACK.append((block, False))
                     # Se il nodo non è stato visitato, valutiamo la condizione e torniamo a visitare il nodo
                     else:
-                        INSTR_STACK.append(node, True)
-                        INSTR_STACK.append(cond, False)
+                        INSTR_STACK.append((node, True))
+                        INSTR_STACK.append((cond, False))
 
 
             ###############
@@ -162,10 +162,10 @@ class LuppoloInterpreter:
             ###############
                 
                 case "NAT":
-                    VALUE_STACK.append(Rational(node.value), negated=node.negated)
+                    VALUE_STACK.append(Rational(node.value, negated=node.negated))
 
                 case "SYM":
-                    VALUE_STACK.append(Symbol(node.value), negated=node.negated)
+                    VALUE_STACK.append(Symbol(node.value, negated=node.negated))
                 
                 case "ID":
                     # Controllo che la variabile sia stata definita
@@ -198,9 +198,9 @@ class LuppoloInterpreter:
                     # stack dei valori, dunque il sinistro e infine nuovamente l'operazione.
                     # Il primo risultato estratto sarà dunque il sinistro, il secondo il destro.
                     else:
-                        INSTR_STACK.append(node, True)
-                        INSTR_STACK.append(node.children[0], False)
-                        INSTR_STACK.append(node.children[1], False)
+                        INSTR_STACK.append((node, True))
+                        INSTR_STACK.append((node.children[0], False))
+                        INSTR_STACK.append((node.children[1], False))
 
 
             ##############
@@ -231,9 +231,9 @@ class LuppoloInterpreter:
 
                     # Altrimenti dobbiamo visitare i figli. Vedi spiegazione ordine in BinOp.
                     else:
-                        INSTR_STACK.append(node, True)
-                        INSTR_STACK.append(node.children[0], False)
-                        INSTR_STACK.append(node.children[1], False)
+                        INSTR_STACK.append((node, True))
+                        INSTR_STACK.append((node.children[0], False))
+                        INSTR_STACK.append((node.children[1], False))
 
                 case "TrueFalse":
                     VALUE_STACK.append(True if node.value == TrueFalse.TrueFalseType.TRUE else False)
@@ -254,9 +254,9 @@ class LuppoloInterpreter:
 
                     # Altrimenti valutiamo i parametri e torniamo a visitare il nodo
                     else:
-                        INSTR_STACK.append(node, True)
+                        INSTR_STACK.append((node, True))
                         for arg in node.args:
-                            INSTR_STACK.append(arg, False)
+                            INSTR_STACK.append((arg, False))
                         
                 
             #########
