@@ -1,0 +1,4 @@
+
+Main(){
+    return 1
+}
