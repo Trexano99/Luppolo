@@ -97,6 +97,15 @@ class LuppoloInterpreter:
             ##############
 
                 case "Assignment":
+                    
+                    # Se il nodo passato nell'assegnamento è un'espressione, allora
+                    # lo salviamo direttamente nella memoria.
+                    # Questo è utile nei casi in cui si voglia asseggnare un valore
+                    # già computato in un altro step. Vedi Foreach. 
+                    if isinstance(node.children[0], BaseLuppExpr):
+                        ID_MEM[node.varName.value] = node.children[0]
+                        continue
+
                     # Se il nodo è già stato visitato, allora possiamo eseguire
                     # l'assegnamento prendendo il valore dallo stack 
                     if visited:
@@ -113,23 +122,37 @@ class LuppoloInterpreter:
                     # utilizzata dalla memoria. Non succede se la variabile era già
                     # presente prima di entrare nel ciclo. Vedi commenti sotto.
                     if visited:
-                        ID_MEM[node.varName.value] = None
+                        evaluatedExpr = VALUE_STACK.pop()
+                        print("DEBUG: IN FOREACH. Expr :", evaluatedExpr)
+                        if isinstance(evaluatedExpr, Add) or isinstance(evaluatedExpr, Mult):
+                            foreachExpr = evaluatedExpr.children
+                        else:
+                            foreachExpr = [evaluatedExpr]
+                        print("DEBUG: IN FOREACH. Expr :", foreachExpr)
+                        # Appendiamo per ogni elemento nell'espressione il blocco di istruzioni
+                        # ma prima andiamo ad assegnare il valore dell'espressione alla variabile
+                        for exprEl in foreachExpr:
+                            INSTR_STACK.append((block, False))
+                            INSTR_STACK.append((Assignment(node.varName, exprEl), False))
                     else:
                         # Se stiamo sovrascrivendo una variabile già esistente ci 
                         # salviamo come assegnamento il suo valore per ripristinarlo
-                        # alla fine del ciclo. Non serve visitare nuovamente questo nodo
-                        if node.value in ID_MEM:
-                            INSTR_STACK.append((Assignment(node.value, ID_MEM[node.varName.value]), False))
-                        # Altrimenti visitiamo nuovamente il nodo che rimuoverà 
-                        # dalla memoria la variabile utilizzata
+                        # alla fine del ciclo. 
+                        if node.varName.value in ID_MEM:
+                            INSTR_STACK.append((Assignment(node.varName, ID_MEM[node.varName.value]), False))
+                        # Altrimenti aggiungiamo la funzione di rimozione del nodo
                         else:
-                            INSTR_STACK.append((node, True))
+                            param = node.varName.value
+                            def remove_var():
+                                del ID_MEM[param]
+                            INSTR_STACK.append((remove_var, False))
+                        
+                        # Aggiungo alle istruzioni il nodo da eseguire nuovamente dopo la valutazione
+                        # dell'espressione.
+                        INSTR_STACK.append((node, True))
+                        # Aggiungo la valutazione dell'espressione
+                        INSTR_STACK.append((expr, False))
 
-                        # Appendiamo per ogni elemento nell'espressione il blocco di istruzioni
-                        # ma prima andiamo ad assegnare il valore dell'espressione alla variabile
-                        for exprEl in reversed(expr.children):
-                            INSTR_STACK.append(block, False)
-                            INSTR_STACK.append((Assignment(node.value, exprEl), False))
                 
                 case "IfElse":
                     cond, trueBlock = node.children[:2]
@@ -186,10 +209,10 @@ class LuppoloInterpreter:
             ###############
                 
                 case "NAT":
-                    VALUE_STACK.append(Rational(int(node.value), negated=node.negated))
+                    VALUE_STACK.append(Rational(int(node.value), negated=node.negated).simplify())
 
                 case "SYM":
-                    VALUE_STACK.append(Symbol(node.value, negated=node.negated))
+                    VALUE_STACK.append(Symbol(node.value, negated=node.negated).simplify())
                 
                 case "ID":
                     # Controllo che la variabile sia stata definita
@@ -197,7 +220,7 @@ class LuppoloInterpreter:
                         LuppoloLogger.logError(f"Variable {node.value} not found.")
                         raise LuppoloInterpException(funcMem)
                     
-                    VALUE_STACK.append(ID_MEM[node.value].copy_with())
+                    VALUE_STACK.append(ID_MEM[node.value].copy_with().simplify())
 
                 case "BinOp":
                     # Se il nodo è già stato visitato, allora possiamo eseguire l'operazione
@@ -282,7 +305,15 @@ class LuppoloInterpreter:
                         for arg in node.children:
                             INSTR_STACK.append((arg, False))
                         
-                
+                    
+            #################
+            # LUPPOLOLAMBDA #
+            #################
+
+                case "function":
+                    node()
+                    
+
             #########
             # ALTRO #
             #########  
