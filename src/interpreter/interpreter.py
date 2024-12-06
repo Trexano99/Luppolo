@@ -12,8 +12,25 @@ from src.expression.leaf import *
 from src.expression.nodes import *
 
 class LuppoloInterpreter:
+    '''
+    LuppoloInterpreter is an interpreter for the Luppolo programming language. It interprets
+    functions defined in the language and executes them iteratively.
+    '''
+
 
     def __init__(self, functions):
+        '''
+        This function initializes the interpreter with the functions to interpret.
+        If there are multiple functions with the same name and the same number of parameters,
+        an error is raised.
+        '''
+
+        # Controllo che non ci siano funzioni con lo stesso nome e lo stesso numero di parametri
+        for func in functions:
+            if any([len(f.funcParams) == len(func.funcParams) for f in functions if func.funcName.value == f.funcName.value and id(f) != id(func)]):
+                LuppoloLogger.logError(f"Function {func.funcName.value} defined multiple times.")
+                raise Exception("An error occurred during the initialization of the interpreter. Read logs for more info.")
+        
         self.functions = functions
 
     def interpretFunc(self, funcName="Main", params=[]):
@@ -37,23 +54,26 @@ class LuppoloInterpreter:
             raise LuppoloInterpException(funcMem)
         
         # Estraggo la funzione chiamata
-        interpFunc : Function = next(func for func in self.functions if func.funcName.value == funcName)
+        interpFunc : Function = next((func for func in self.functions if func.funcName.value == funcName and len(func.funcParams) == len(params)), None)
         
+        # Se non è stata trovata una funzione con lo stesso numero di parametri, allora segnalo l'errore
+        if interpFunc is None:
+            error = f"Function {funcName} with {len(params)} parameters not found."
+            possibleAlternative =  [func for func in self.functions if func.funcName.value == funcName]
+            error += "\nPossible alternatives are:"
+            for func in possibleAlternative:
+                error += f"\n{func.funcName.value}({[param.value for param in func.funcParams]})"
+
+            LuppoloLogger.logError(error)
+            raise LuppoloInterpException(funcMem)
+
+        # Controllo che non ci siano parametri con lo stesso nome
         if len([par.value for par in interpFunc.funcParams]) != len({par.value for par in interpFunc.funcParams}):
             LuppoloLogger.logError(f"Function {funcName} has multiple parameters with the same name. Ambiguity is not allowed.")
             raise LuppoloInterpException(funcMem)
-
-        # Controllo che il numero di parametri passati alla funzione sia corretto
-        if len(params) != len(expFuncParams := interpFunc.funcParams):
-            error = f"Function {funcName} called with wrong number of parameters."
-            error += f"Expected {len(expFuncParams)} {[param.value for param in expFuncParams]}"
-            error += f", got {len(params)} {params}."
-            
-            LuppoloLogger.logError(error)
-            raise LuppoloInterpException(funcMem)
         
         #Carico in memoria i parametri passati alla funzione
-        for param, value in zip(expFuncParams, params):
+        for param, value in zip(interpFunc.funcParams, params):
             ID_MEM[param.value] = value
 
         # Carico nello stack delle istruzioni le istruzioni della funzione
