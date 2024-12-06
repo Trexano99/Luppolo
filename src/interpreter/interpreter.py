@@ -35,7 +35,7 @@ class LuppoloInterpreter:
 
     def interpretFunc(self, funcName="Main", params=[]):
         '''
-        This funciont is an iterative interpreter for a Luppolo function.
+        This function is an iterative interpreter for a Luppolo function.
         '''
 
         # Il dizionario che mappa gli ID con i loro valori
@@ -238,7 +238,7 @@ class LuppoloInterpreter:
                             case BinOp.BinOpType.DIV:
                                 VALUE_STACK.append(Mult([left, Pow(right, Rational(-1))], node.negated).simplify())
                             case BinOp.BinOpType.POW:
-                                VALUE_STACK.append(Pow([left, right], node.negated).simplify())
+                                VALUE_STACK.append(Pow(left, right, node.negated).simplify())
                     # Altrimenti dobbiamo visitare i figli. Aggiungiamo allo stack prima
                     # il nodo stesso, poi il nodo di sinistra e dunque il destro.
                     # Così nell'esecuzione verrà eseguito prima il destro e messo nello 
@@ -336,8 +336,8 @@ class LuppoloInterpException(Exception):
     
     def __init__(self,funcMem):
         errorMessage = "An error occurred during the interpretation of the program. Read logs for more info.\n"
-        errorMessage += "Function memory at the time of the error:\n"
         if LuppoloInterpException.verboseLog:
+            errorMessage += "Function memory at the time of the error:\n"
             errorMessage += f"ID_MEM: {funcMem[0]}\n"
             errorMessage += f"INSTR_STACK: {funcMem[1]}\n"
             errorMessage += f"VALUE_STACK: {funcMem[2]}\n"
