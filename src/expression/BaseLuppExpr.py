@@ -109,7 +109,11 @@ class BaseLuppExpr(GenericTreeNode):
             res = super(self.__class__, self).simplify()
             if res is not None:
                 return res
-            return method(self, *args, **kwargs)
+            prec = self
+            res = method(self, *args, **kwargs)
+            if prec!=res:
+                return res.simplify()
+            return res
         return wrapper
     
 
@@ -137,6 +141,14 @@ class BaseLuppExpr(GenericTreeNode):
             assert symbol.__class__.__name__ == "Symbol", "The symbol must be a Symbol isntance"
             return method(self, *args, **kwargs)
         return wrapper
+    
+    def findInnerSymbols(self):
+        '''
+        This method is used to find all the symbols inside the node and all children.
+        '''
+        if self.__class__.__name__ == "Symbol":
+            return {self.copy_with(negated = False)}
+        return set().union(*[child.findInnerSymbols() for child in self.children])
 
 
     def __lt__(self, other):
