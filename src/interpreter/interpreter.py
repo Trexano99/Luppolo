@@ -80,7 +80,7 @@ class LuppoloInterpreter:
                     # Se il nodo è già stato visitato, allora possiamo eseguire
                     # l'assegnamento prendendo il valore dallo stack 
                     if visited:
-                        ID_MEM[node.value] = VALUE_STACK.pop()
+                        ID_MEM[node.varName.value] = VALUE_STACK.pop()
                     
                     # Altrimenti dobbiamo visitare l'espessione 
                     else:
@@ -93,13 +93,13 @@ class LuppoloInterpreter:
                     # utilizzata dalla memoria. Non succede se la variabile era già
                     # presente prima di entrare nel ciclo. Vedi commenti sotto.
                     if visited:
-                        ID_MEM[node.value] = None
+                        ID_MEM[node.varName.value] = None
                     else:
                         # Se stiamo sovrascrivendo una variabile già esistente ci 
                         # salviamo come assegnamento il suo valore per ripristinarlo
                         # alla fine del ciclo. Non serve visitare nuovamente questo nodo
                         if node.value in ID_MEM:
-                            INSTR_STACK.append((Assignment(node.value, ID_MEM[node.value]), False))
+                            INSTR_STACK.append((Assignment(node.value, ID_MEM[node.varName.value]), False))
                         # Altrimenti visitiamo nuovamente il nodo che rimuoverà 
                         # dalla memoria la variabile utilizzata
                         else:
