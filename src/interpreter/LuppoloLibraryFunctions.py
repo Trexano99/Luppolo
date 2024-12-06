@@ -3,6 +3,7 @@
 from src.utils.LuppoloLogger import LuppoloLogger
 
 from src.expression.BaseLuppExpr import BaseLuppExpr
+from src.expression.leaf import Rational, Symbol
 
 class LuppoloLibraryFunctions:
     @staticmethod
@@ -27,19 +28,41 @@ class LuppoloLibraryFunctions:
         return expr.substitute(match, subst)
 
     @staticmethod
-    def Eval(expr):
+    def Eval(expr, rat):
         # TODO: Implement Eval functions
-        raise NotImplementedError("Eval function is not implemented yet.")
+
+        if not isinstance(expr, BaseLuppExpr):
+            LuppoloLogger.logError("Argument expr passed to Eval function is not an expression.")
+            raise Exception("An error occurred during the execution of the Eval function.")
+        if not isinstance(rat, Rational):
+            LuppoloLogger.logError("Argument rat passed to Eval function is not a rational.")
+            raise Exception("An error occurred during the execution of the Eval function.")
+
+        symbols = expr.findInnerSymbols()
+        print("Founded symbols: ", symbols)
+        if len(symbols) > 1:
+            LuppoloLogger.logError("The expression has more than one symbol. Cannot apply eval.")
+            raise Exception("An error occurred during the execution of the Eval function.")
+        if len(symbols) == 0:
+            LuppoloLogger.logError("The expression has no symbols. Cannot apply eval.")
+            raise Exception("An error occurred during the execution of the Eval function.")
+        
+        sym : Symbol = symbols.pop()
+        return expr.substitute(sym, rat)
 
     @staticmethod
     def SimplDerive(expr, sym):
         '''
         This function simplifies the derivative of the expression passed as argument with respect to the symbol passed as argument.
         '''
-        exprSym = [expr, sym]
-        if not all([isinstance(el, BaseLuppExpr) for el in exprSym]):
-            LuppoloLogger.logError("Arguments passed to SimplDerive function are not all expressions.")
+
+        if not isinstance(expr, BaseLuppExpr):
+            LuppoloLogger.logError("Argument expr passed to SimplDerive function is not an expression.")
             raise Exception("An error occurred during the execution of the SimplDerive function.")
+        if not isinstance(sym, Symbol):
+            LuppoloLogger.logError("Argument sym passed to SimplDerive function is not a symbol.")
+            raise Exception("An error occurred during the execution of the SimplDerive function.")
+        
         return expr.derive(sym).simplify()
 
     @staticmethod
