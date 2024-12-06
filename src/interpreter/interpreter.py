@@ -5,18 +5,19 @@ from src.ast.elements.expression.BinOp import BinOp
 from src.ast.elements.condition.BinCond import BinCond
 from src.ast.elements.condition.TrueFalse import TrueFalse
 
-
 from src.ast.elements.instruction.Assignment import Assignment
 
 from src.expression.leaf import *
 from src.expression.nodes import *
+
+from src.interpreter.LuppoloLibraryFunctions import LuppoloLibraryFunctions
 
 class LuppoloInterpreter:
     '''
     LuppoloInterpreter is an interpreter for the Luppolo programming language. It interprets
     functions defined in the language and executes them iteratively.
     '''
-
+    
 
     def __init__(self, functions):
         '''
@@ -24,9 +25,15 @@ class LuppoloInterpreter:
         If there are multiple functions with the same name and the same number of parameters,
         an error is raised.
         '''
-
-        # Controllo che non ci siano funzioni con lo stesso nome e lo stesso numero di parametri
+        
         for func in functions:
+
+            # Controllo che non ci siano funzioni con lo stesso nome di quelle di libreria
+            if func.funcName.value in LuppoloLibraryFunctions.availableFunctions:
+                LuppoloLogger.logError(f"Function {func.funcName.value} has the same name of a Luppolo Library Function. Not allowed.")
+                raise Exception("An error occurred during the initialization of the interpreter. Read logs for more info.")
+
+            # Controllo che non ci siano funzioni con lo stesso nome e lo stesso numero di parametri
             if any([len(f.funcParams) == len(func.funcParams) for f in functions if func.funcName.value == f.funcName.value and id(f) != id(func)]):
                 LuppoloLogger.logError(f"Function {func.funcName.value} defined multiple times.")
                 raise Exception("An error occurred during the initialization of the interpreter. Read logs for more info.")
@@ -50,6 +57,10 @@ class LuppoloInterpreter:
 
         # Controllo che la funzione chiamata esista
         if not any([funcName == func.funcName.value for func in self.functions]):
+
+            if funcName in LuppoloLibraryFunctions.availableFunctions:
+                return LuppoloLibraryFunctions.availableFunctions[funcName](*params)
+
             LuppoloLogger.logError(f"Function {funcName} not found.")
             raise LuppoloInterpException(funcMem)
         
@@ -172,19 +183,26 @@ class LuppoloInterpreter:
                 case "Repeat":
                     expr, block = node.children
 
-                    # Se il valore dell'espressione di repeat non è un intero positivo
-                    # segnalo l'errore e sollevo un'eccezione
-                    if not expr.__class__.__name__ == "Rational" or expr.denominator != 1 or expr.negated:
-                        LuppoloLogger.logError("Repeat expression must be a positive integer number.")
-                        raise LuppoloInterpException(funcMem)
-                    
-                    INSTR_STACK.extend([(block,False) for _ in range(expr.numerator)])
+                    # Se il nodo è già stato visitato, allora valutiamo l'espressione
+                    if visited:
+                        expr = VALUE_STACK.pop()
+                        # Se il valore dell'espressione di repeat non è un intero positivo
+                        # segnalo l'errore e sollevo un'eccezione
+                        if (not expr.__class__.__name__ == "Rational") or (expr.denominator != 1) or (expr.negated):
+                            LuppoloLogger.logError("Repeat expression must be a positive integer number.")
+                            raise LuppoloInterpException(funcMem)
+                        
+                        INSTR_STACK.extend([(block,False) for _ in range(expr.numerator)])
+                    # Altrimenti valutiamo l'espressione e torniamo a visitare il nodo
+                    else:
+                        INSTR_STACK.append((node, True))
+                        INSTR_STACK.append((expr, False))
 
                 case "Return":
                     
                     # Se il nodo è già stato visitato, allora possiamo restituire il valore
                     if visited:
-                        return VALUE_STACK.pop()
+                        return VALUE_STACK.pop().simplify()
                     # Altrimenti visitiamo l'espressione e torniamo a visitare il nodo
                     else:
                         INSTR_STACK.append((node, True))
@@ -262,19 +280,21 @@ class LuppoloInterpreter:
                         right = VALUE_STACK.pop()
                         match node.op:
                             case BinCond.BinCondType.EQ:
-                                VALUE_STACK.append(left == right)
+                                res = left == right
                             case BinCond.BinCondType.GREATER:
-                                VALUE_STACK.append(right < left)
+                                res = right < left
                             case BinCond.BinCondType.GEQ:
-                                VALUE_STACK.append((right < left) or (right == left))
+                                res = (right < left) or (right == left)
                             case BinCond.BinCondType.LESS:
-                                VALUE_STACK.append(left < right)
+                                res = left < right
                             case BinCond.BinCondType.LEQ:
-                                VALUE_STACK.append((left < right) or (left == right))
+                                res = (left < right) or (left == right)
                             case BinCond.BinCondType.AND:
-                                VALUE_STACK.append(left and right)
+                                res = left and right
                             case BinCond.BinCondType.OR:
-                                VALUE_STACK.append(left or right)
+                                res = left or right
+                        
+                        VALUE_STACK.append(res != node.negated)
 
                     # Altrimenti dobbiamo visitare i figli. Vedi spiegazione ordine in BinOp.
                     else:
@@ -283,7 +303,8 @@ class LuppoloInterpreter:
                         INSTR_STACK.append((node.children[1], False))
 
                 case "TrueFalse":
-                    VALUE_STACK.append(True if node.value == TrueFalse.TrueFalseType.TRUE else False)
+                    res = node.value == TrueFalse.TrueFalseType.TRUE 
+                    VALUE_STACK.append(res != node.negated)
 
                 
             ############
