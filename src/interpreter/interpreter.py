@@ -11,19 +11,20 @@ from src.expression.leaf import *
 from src.expression.nodes import *
 
 from src.interpreter.LuppoloLibraryFunctions import LuppoloLibraryFunctions
+from src.interpreter.LuppoloInterpException import LuppoloInterpException
 
 class LuppoloInterpreter:
     '''
     LuppoloInterpreter is an interpreter for the Luppolo programming language. It interprets
     functions defined in the language and executes them iteratively.
     '''
-    
+
 
     def __init__(self, functions):
         '''
         This function initializes the interpreter with the functions to interpret.
-        If there are multiple functions with the same name and the same number of parameters,
-        an error is raised.
+        If there are multiple functions with the same name and the same number of parameters or 
+        if a function has the same name of a Luppolo Library Function, an Exception is raised. 
         '''
         
         for func in functions:
@@ -349,17 +350,3 @@ class LuppoloInterpreter:
         
 
 
-
-
-class LuppoloInterpException(Exception):
-
-    verboseLog = True
-    
-    def __init__(self,funcMem):
-        errorMessage = "An error occurred during the interpretation of the program. Read logs for more info.\n"
-        if LuppoloInterpException.verboseLog:
-            errorMessage += "Function memory at the time of the error:\n"
-            errorMessage += f"ID_MEM: {funcMem[0]}\n"
-            errorMessage += f"INSTR_STACK: {funcMem[1]}\n"
-            errorMessage += f"VALUE_STACK: {funcMem[2]}\n"
-        super().__init__(errorMessage)
