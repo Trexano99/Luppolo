@@ -8,9 +8,14 @@ from src.expression.nodes import Pow
 
 from src.interpreter.LuppoloInterpException import LuppoloInterpException
 
-# TODO: Metti a posto secondo la documentazione
 
 class LuppoloLibraryFunctions:
+    '''
+    This class contains the definition of the library functions that 
+    have been developed for the project.
+    '''
+
+
     @staticmethod
     def Expand(expr):
         '''
@@ -18,7 +23,10 @@ class LuppoloLibraryFunctions:
         '''
         if not isinstance(expr, BaseLuppExpr):
             LuppLoggerWitExc.logError("Argument passed to Expand function is not an expression.")
-        return expr.expand()
+        
+        while expr != (res:=expr.expand()):
+            expr = res
+        return expr
     
     @staticmethod
     def Substitute(expr, match, subst):
@@ -44,8 +52,7 @@ class LuppoloLibraryFunctions:
         if not isinstance(rat, Rational):
             LuppLoggerWitExc.logError("Argument rat passed to Eval function is not a rational.")
 
-        symbols = expr.findInnerElementsOfType(Symbol)
-        print("Founded symbols: ", symbols)
+        symbols = expr.findInnerElementsOfType("Symbol")
         if len(symbols) > 1:
             LuppLoggerWitExc.logError("The expression has more than one symbol. Cannot apply eval.")
         if len(symbols) == 0:
@@ -67,7 +74,7 @@ class LuppoloLibraryFunctions:
         if not isinstance(sym, Symbol):
             LuppLoggerWitExc.logError("Argument sym passed to SimplDerive function is not a symbol.")
         
-        pows = expr.findInnerElementsOfType(Pow)
+        pows = expr.findInnerElementsOfType("Pow")
         
         # Controllo che non ci siano potenze con esponenti non razionali
         if any([not isinstance(pow.children[1], Rational) for pow in pows]):
@@ -91,7 +98,7 @@ class LuppoloLibraryFunctions:
             LuppLoggerWitExc.logError("Argument sym passed to DerivePolynomial function is not a symbol.")
 
         expandedExpr = expr.expand()
-        exprVariables = expandedExpr.findInnerElementsOfType(Symbol)
+        exprVariables = expandedExpr.findInnerElementsOfType("Symbol")
 
         if len(exprVariables) > 1:
             LuppLoggerWitExc.logError("Cannot derive polynomial with more than one variable.")
@@ -116,6 +123,10 @@ class LuppoloLibraryFunctions:
 
 
 class LuppLoggerWitExc(LuppoloLogger):
+    '''
+    This class is a wrapper of the LuppoloLogger class that log the error 
+    and raise the LuppoloInterpException. Created to avoid code verbosity.
+    '''
     @staticmethod
     def logError(message):
         super().logError(message)
