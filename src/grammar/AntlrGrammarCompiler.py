@@ -3,12 +3,12 @@
 
 import subprocess
 
-from utils.LuppoloLogger import LuppoloLogger
+from src.utils.LuppoloLogger import LuppoloLogger
 class AntlrGrammarCompiler:
 
     @staticmethod
     def compileGrammar(
-            syntaxFilePath = 'grammar\\syntax\\luppolo.g',
+            syntaxFilePath = 'src\\grammar\\syntax\\luppolo.g',
             targetDir = '../bin',
             antlrJarPath = '%ANTLR4_JAR%'):
         '''
@@ -22,7 +22,7 @@ class AntlrGrammarCompiler:
         
         command = f'java -jar "{antlrJarPath}" -Dlanguage=Python3 -visitor -o {targetDir} {syntaxFilePath}'
         
-        LuppoloLogger.logInfo(f'Compiling grammar.')
+        LuppoloLogger.logInfo(f'Compiling Luppolo grammar.')
         try:
             subprocess.run(command, shell=True, check=True)
         except subprocess.CalledProcessError as e:
