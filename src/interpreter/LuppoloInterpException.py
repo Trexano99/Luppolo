@@ -1,7 +1,6 @@
 import sys
 
 # To remove traceback from error
-#sys.tracebacklimit=0
 
 class LuppoloInterpException(Exception):
     '''
@@ -9,7 +8,11 @@ class LuppoloInterpException(Exception):
     '''
 
     verboseLog = True
+    stackTrace = False
     defaultErrorMessage = "An error occurred during the interpretation of the program. Read logs for more info.\n"
+
+    if not stackTrace:
+        sys.tracebacklimit=0
     
     def __init__(self, funcMem=None):
         '''
