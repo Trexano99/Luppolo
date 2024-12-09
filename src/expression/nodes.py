@@ -63,7 +63,6 @@ class Add(BaseLuppExpr):
             # Se uno degli addendi è un prodotto con un razionale davanti, 
             # aggiungi il prodotto alla lista dei fattori moltiplicativi
             else:
-                #TODO: SE HO UN MOLT O UN POW NEGATO DEVO PORTARMELO DIETRO!
                 rationalPart = Rational(1, negated = addend.negated)
                 addend = addend.copy_with(negated = False)
                 # Se è una moltiplicazione e c'è un razionale davanti
