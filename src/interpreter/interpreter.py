@@ -1,7 +1,8 @@
 
 from src.utils.LuppoloLogger import LuppoloLogger
 from src.ast.elements.Function import Function
-from src.ast.elements.expression.BinOp import BinOp
+from src.ast.elements.expression.BinOp import BinOp, BaseExpr
+from src.ast.elements.FuncCall import FuncCall
 from src.ast.elements.condition.BinCond import BinCond
 from src.ast.elements.condition.TrueFalse import TrueFalse
 
@@ -59,6 +60,7 @@ class LuppoloInterpreter:
         # Controllo che la funzione chiamata esista
         if not any([funcName == func.funcName.value for func in self.functions]):
 
+            #Se la funzione non esiste controllo tra le funzioni di libreria
             if funcName in LuppoloLibraryFunctions.availableFunctions:
                 return LuppoloLibraryFunctions.availableFunctions[funcName](*params)
 
@@ -84,12 +86,16 @@ class LuppoloInterpreter:
             LuppoloLogger.logError(f"Function {funcName} has multiple parameters with the same name. Ambiguity is not allowed.")
             raise LuppoloInterpException(funcMem)
         
-        #Carico in memoria i parametri passati alla funzione
-        for param, value in zip(interpFunc.funcParams, params):
-            ID_MEM[param.value] = value
+        if not all([isinstance(param, BaseExpr) or isinstance(param, FuncCall) for param in params]):
+            LuppoloLogger.logError(f"Function {funcName} must be called with AST expressions as parameters.")
+            raise LuppoloInterpException(funcMem)
 
         # Carico nello stack delle istruzioni le istruzioni della funzione
         INSTR_STACK = [(instr, False) for instr in reversed(interpFunc.children)]
+
+        # Carico nello stack dei valori i parametri passati alla funzione
+        for param, value in zip(interpFunc.funcParams, params):
+            INSTR_STACK.append((Assignment(param, value), False))
 
         # Ciclo finchè ci sono istruzioni da eseguire
         while INSTR_STACK:
@@ -135,12 +141,10 @@ class LuppoloInterpreter:
                     # presente prima di entrare nel ciclo. Vedi commenti sotto.
                     if visited:
                         evaluatedExpr = VALUE_STACK.pop()
-                        print("DEBUG: IN FOREACH. Expr :", evaluatedExpr)
                         if isinstance(evaluatedExpr, Add) or isinstance(evaluatedExpr, Mult):
                             foreachExpr = evaluatedExpr.children
                         else:
                             foreachExpr = [evaluatedExpr]
-                        print("DEBUG: IN FOREACH. Expr :", foreachExpr)
                         # Appendiamo per ogni elemento nell'espressione il blocco di istruzioni
                         # ma prima andiamo ad assegnare il valore dell'espressione alla variabile
                         for exprEl in foreachExpr:
