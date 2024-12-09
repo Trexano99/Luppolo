@@ -10,7 +10,7 @@ class LuppoloLogger(logging.Logger):
     __DEFAULT_LOG_FILE_PATH = '../data/luppolo.log'
     __logger = None
 
-    def __init__(self, name, level=logging.NOTSET):
+    def __init__(self, name, level=logging.NOTSET, logFile = __DEFAULT_LOG_FILE_PATH):
         '''
         The constructor of the LuppoloLogger class. 
         It initializes the logger with the given name and level. 
@@ -19,17 +19,20 @@ class LuppoloLogger(logging.Logger):
         '''
         super().__init__(name, level)
         self.setLevel(level)
-        self.__createLuppoloLogFile(self.__DEFAULT_LOG_FILE_PATH)
+        self.__createLuppoloLogFile(logFile)
 
         # File handler
-        file_handler = logging.FileHandler(self.__DEFAULT_LOG_FILE_PATH)
+        file_handler = logging.FileHandler(logFile)
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         self.addHandler(file_handler)
 
         # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+        console_handler.setLevel(level)
         self.addHandler(console_handler)
+
+        print("Luppolo logger initialized. Logging level " + logging.getLevelName(level)+" in file: "+logFile)
 
 
     def __createLuppoloLogFile(self, logFilePath):
@@ -72,7 +75,16 @@ class LuppoloLogger(logging.Logger):
     def __log(message, level=logging.NOTSET):
         if LuppoloLogger.__logger is None:
             LuppoloLogger.__logger = LuppoloLogger('LuppoloLogger', logging.DEBUG)
-        LuppoloLogger.__logger.log(level, message)
-
-# Initialize the default logger
-LuppoloLogger.__logger = LuppoloLogger('LuppoloLogger', logging.DEBUG)
+        if LuppoloLogger.__logger.isEnabledFor(level):
+            LuppoloLogger.__logger.log(level, message)
+    
+    @staticmethod
+    def getLoggingLevelFromString(loggingLvlStr):
+        ''' This method returns the logging level from a string. '''
+        return {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL
+        }[loggingLvlStr]
