@@ -73,7 +73,8 @@ class BaseLuppExpr(GenericTreeNode):
     def expand(self):
         '''
         This method is used to manipulate the node expanding the node due
-        to the properties of sum, product and power.
+        to the properties of sum, product and power. The node is expanded
+        only once.
         '''
         return self.copy_with()
     
@@ -124,7 +125,6 @@ class BaseLuppExpr(GenericTreeNode):
         before calling the method passed as parameter.
         '''
         def wrapper(self, *args, **kwargs):
-            print("Expanding element of class: ", self.__class__.__name__)
             self.children = [child.expand() for child in self.children]
             return method(self, *args, **kwargs)
         return wrapper
@@ -142,13 +142,15 @@ class BaseLuppExpr(GenericTreeNode):
             return method(self, *args, **kwargs)
         return wrapper
     
-    def findInnerSymbols(self):
+    def findInnerElementsOfType(self, typeString):
         '''
-        This method is used to find all the symbols inside the node and all children.
+        This method is used to find all the inner elements of the node of a specific type.
+        Parameters:
+        - typeString: the type of the elements to find in String format
         '''
-        if self.__class__.__name__ == "Symbol":
+        if self.__class__.__name__ == typeString:
             return {self.copy_with(negated = False)}
-        return set().union(*[child.findInnerSymbols() for child in self.children])
+        return set().union(*[child.findInnerElementsOfType(typeString) for child in self.children])
 
 
     def __lt__(self, other):
