@@ -103,7 +103,6 @@ class AstGenerator(luppoloVisitor):
         return FuncCall(self.visit(ctx.children[0]), self.visit(ctx.children[2]))
     
     def visitExpression_list(self, ctx: luppoloParser.Expression_listContext):
-        print("children: ", ctx.children)
         return [self.visit(child) for i, child in enumerate(ctx.children) if i % 2 == 0]
         
     
