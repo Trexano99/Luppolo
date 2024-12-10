@@ -36,12 +36,13 @@ L'ast rappresenta l'albero astratto del linguaggio, ovvero una semplificazione d
 La generazione dell'AST avviene attraverso la classe [AstGenerator](src/ast/AstGenerator.py) che utilizzando un visitor, visita l'albero sintattico generato dal parser e produce per ogni nodo le corrispettive astrazioni che possono essere trovate all'interno della directory [elements](src/ast/elements).
 
 ### EXPRESSION
-Le espressioni sono le unità fondamentali del linguaggio, e sono rappresentate all'interno della cartella [expression](src/ast/elements/expression). <br>
+Le espressioni sono le unità fondamentali del linguaggio, e sono rappresentate all'interno della cartella [expression](src/expression). <br>
 Sono utilizzate per la rappresentazione di espressioni algebriche e possono essere suddivise in [nodes](src/expression/nodes.py), che rappresentano gli operatori di somma, prodotto e potenza, e [leaf](src/expression/leaf.py), che sono i numeri razionali e i simboli.
 
 ### GRAMMAR
-Contiene la definizione della [grammatica](src/grammar/LuppoloGrammar.py) del linguaggio Luppolo. <br>
-E' presente inoltre la classe [AntlrGrammarCompiler](src/grammar/AntlrGrammarCompiler.py) che permette di compilare la grammatica in modo automatico. Vedi nella Guida all'utilizzo per ulteriori informazioni.
+Contiene la definizione della [grammatica](src/grammar/syntax/luppolo.g) del linguaggio Luppolo. <br>
+E' presente inoltre la classe [AntlrGrammarCompiler](src/grammar/AntlrGrammarCompiler.py) che permette di compilare la grammatica in modo automatico. Vedi sezione [compilazione automatica](#compilazione-automatica) per ulteriori informazioni.<br>
+In [LuppoloGrammar](src/grammar/LuppoloGrammar.py) è presente invece la definizione di tutti gli elementi utili per interagire con la grammatica.
 
 ### INTERPRETER
 Contiente l'[interprete](src/interpreter/interpreter.py) del linguaggio, che permette di eseguire il codice scritto in Luppolo. <br>
@@ -89,12 +90,13 @@ python -m src.main compile
 Per approfondimenti vedere la guida aggiungendo `--help` alla fine del comando.
 
 #### Compilazione manuale
-Per la compilazione manuale è necessario utilizzare il jar di antlr4, che può essere scaricato dal sito ufficiale di antlr4. Una volta scaricato il jar, è possibile compilare la grammatica con il comando `java -jar [YOUR ANTLR_JAR] -Dlanguage=Python3 -visitor -o bin/ grammar\syntax\luppolo.g`.
+Per la compilazione manuale è necessario utilizzare il jar di antlr4 attraverso comando `java -jar [YOUR ANTLR_JAR] -Dlanguage=Python3 -visitor -o bin/ grammar\syntax\luppolo.g`.
 
 <br>
 
 ### ESECUZIONE DELL'INTERPRETE
-L'esecuzione dell'interprete è subordinata alla compilazione della grammatica. <br>
+**ATTENZIONE**: L'esecuzione dell'interprete è subordinata alla compilazione della grammatica. 
+<br><br>
 Il file sorgente che deve essere interpretato deve avere l'estensione `.lp` e deve essere passato come primo argomento quando viene eseguito l'interprete. <br>
 Oltre al file sorgente è possibile specificare (se necessario) i parametri in formato stringa che verranno passati alla funzione principale del programma. Questi possono essere semplici valori numerici così come valori più complessi tipo espressioni algebriche, funzioni definite nello stesso sorgente o funzioni di libreria. Essi verranno infatti interpretati nel momento dell'esecuzione dell'interprete.
 
@@ -193,12 +195,12 @@ Es: In grammar _Id è subordinato alla correttezza di function(vedi [emptyFunc](
 Per l'esecuzione dei test è possibile utilizzare il comando `test` come spiegato nella sezione [Esecuzione dei test](#esecuzione-dei-test).
 
 ### GRAMMAR
-All'interno della folder [grammar](grammar) sono presenti alcune batterie di test per la grammatica del linguaggio. <br>
+All'interno della folder [grammar](test/grammar) sono presenti alcune batterie di test per la grammatica del linguaggio. <br>
 Sono stati testati tutti i costrutti sintattici del linguaggio e per ognuno di essi sono stati sono stati creati dei test che permettono di provare le varie configurazioni che devono essere rispettate.
 
 ### INTERPRETER
-All'interno di [interpreter](interpreter) sono presenti dei test che permettono di verificare il corretto funzionamento dell'interprete. <br>
+All'interno di [interpreter](test/interpreter) sono presenti dei test che permettono di verificare il corretto funzionamento dell'interprete. <br>
 
 ### AST
-All'interno di [ast](ast) sono presenti dei test che permettono di verificare il corretto funzionamento della generazione dell'AST. Questi non sono divisi tra `valid` e `erroneous` poichè non è possibile generare un AST da un codice errato.<br>
+All'interno di [ast](test/ast) sono presenti dei test che permettono di verificare il corretto funzionamento della generazione dell'AST. Questi non sono divisi tra `valid` e `erroneous` poichè non è possibile generare un AST da un codice errato.<br>
 Questi test richiedono di essere eseguiti a mano e verificare dunque che l'AST prodotto rispecchi quanto atteso.
