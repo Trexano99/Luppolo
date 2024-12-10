@@ -12,9 +12,11 @@ def generateLatex(
         expr : BaseLuppExpr, 
         resultDir = './output',
         resultFileName = 'result',
+        includeLogo = True,
         includeThreeGraph = True,
         includeLatex = True,
-        includeRaw = True):
+        includeRaw = True,
+        astTreeRapresentation = None):
     '''
     This method generates the LaTeX representation of the expression.
     The method takes the following parameters:
@@ -27,17 +29,19 @@ def generateLatex(
     Return the path of the generated LaTeX file.
     '''
     LuppoloLogger.logInfo("Generating expression LaTeX representation")
-    pathGen = __generateLatex(expr, resultDir, resultFileName, includeThreeGraph, includeLatex, includeRaw)
+    pathGen = __generateLatex(expr, resultDir, resultFileName, includeLogo, includeThreeGraph, includeLatex, includeRaw, astTreeRapresentation)
     LuppoloLogger.logInfo(f"LaTeX representation generated in {pathGen}")
     return pathGen
 
-def generatePdf(
+def generateResultPdf(
         expr : BaseLuppExpr, 
         resultDir = './output',
         resultFileName = 'result',
+        includeLogo = True,
         includeThreeGraph = True,
         includeLatex = True,
-        includeRaw = True):
+        includeRaw = True,
+        astTreeRapresentation = None):
     '''
     This method generates the PDF representation of the expression.
     The method takes the following parameters:
@@ -49,10 +53,9 @@ def generatePdf(
     - includeRaw: a boolean value indicating if the pdf should include the raw representation of the expression.
     Return the path of the generated PDF file.
     '''
-    
     LuppoloLogger.logInfo("Generating expression PDF representation")
     # Genero il file latex da aggiungere al PDF
-    __generateLatex(expr, resultDir, resultFileName, includeThreeGraph, includeLatex, includeRaw)
+    __generateLatex(expr, resultDir, resultFileName, includeLogo, includeThreeGraph, includeLatex, includeRaw, astTreeRapresentation)
 
     # Cancello il vecchio file pdf se esiste e nel caso lo rimuovo
     if os.path.exists(f'{resultDir}/{resultFileName}.pdf'):
@@ -75,6 +78,22 @@ def generatePdf(
 
     return pathFileGenerated
     
+def createDigraphPdfFromTree(tree, fileName):
+    '''
+    This method creates a pdf from a tree.
+    The method takes the following parameters:
+    - tree: the tree to represent.
+    - fileName: the name of the output file.
+    Return the path of the generated PDF file.
+    '''
+    d = Digraph()
+    tree.getGraphRapresentation(d)
+    try:
+        d.render(f'./output/temp/{fileName}', format = "pdf", view=False)
+    except Exception as e:
+        LuppoloLogger.logError(f"Error creating pdf from tree: {e}")
+        raise e
+    return f'./output/temp/{fileName}.pdf'
 
 
 def __generateLatex(
@@ -84,7 +103,8 @@ def __generateLatex(
         includeLogo = True,
         includeThreeGraph = True,
         includeLatex = True,
-        includeRaw = True):
+        includeRaw = True,
+        astTreeRapresentation = None):
     
     resultLtx = r"""
         \documentclass{article}
@@ -92,6 +112,8 @@ def __generateLatex(
         \usepackage{amsmath}
         \usepackage{geometry}
         \usepackage{fancyvrb}
+        \usepackage{pdflscape}
+        \usepackage{pdfpages}
         
         \geometry{a4paper, margin=1in}
 
@@ -120,17 +142,14 @@ def __generateLatex(
         """ % exprLatex
 
     if includeThreeGraph:
-        d = Digraph()
-        expr.getGraphRapresentation(d)
-        d.render('./output/temp/graph', format = "pdf", view=False)
 
         resultLtx += r"""
         \section*{Graph Representation}
         \vspace{-2em}
         \begin{center}
-        \includegraphics{./output/temp/graph.pdf}
+        \includegraphics{%s}
         \end{center}
-        """
+        """%createDigraphPdfFromTree(expr, 'graph')
     
     if includeRaw:
         exprRaw = Trees.toStringTree(expr).strip()
@@ -142,6 +161,11 @@ def __generateLatex(
         \texttt{%s} 
         \end{center}
         """ % exprRaw
+
+    if astTreeRapresentation is not None:
+        resultLtx += r"""
+        \includepdf[landscape=true]{%s}
+        """%astTreeRapresentation
 
     resultLtx += r"""
         \end{document}
