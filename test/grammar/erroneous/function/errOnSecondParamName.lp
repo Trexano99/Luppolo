@@ -1,1 +1,1 @@
-FunctionName(AParameter, Third){}
+FunctionName(AParameter, third){}

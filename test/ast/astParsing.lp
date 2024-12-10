@@ -49,7 +49,6 @@ TestFuncCall(){
     C = AThirdFuncNameId(AsecondFunc(d), AnID)
     D = LastFuncNameID(2/3^5, (2+3)*2)
 }
-/*
 PowPrecedenceTests(){
     A = 2*3^2
     B = -3^2
@@ -97,6 +96,5 @@ MoreLongTests(){
     G = (5 + 2) * 3 - (6 / 2) + 1  
 }
 
-*/
-
 Main(){}
+*/
