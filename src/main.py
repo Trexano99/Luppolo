@@ -1,6 +1,5 @@
 import argparse, os
 
-from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Trees import Trees
 
 from src.utils.LuppoloLogger import LuppoloLogger
@@ -33,8 +32,8 @@ def solveParsedArgs(parsed_args):
             # Leggo il file sorgente e preparo il lexer ed il parser
             LuppoloLogger.logInfo(f"Reading source file {sourceFilePath} and initializing lexer and parser")
             fileContent = open(sourceFilePath, 'r').read()
-            lexer = LuppoloGrammar.luppoloLexer(InputStream(fileContent))
-            parser = LuppoloGrammar.luppoloParser(CommonTokenStream(lexer))
+            lexer = LuppoloGrammar.getLuppoloLexer(fileContent)
+            parser = LuppoloGrammar.getLuppoloParser(lexer)
 
             # Effettuo il parsing del file sorgente
             LuppoloLogger.logInfo("Parsing the input")
@@ -43,7 +42,7 @@ def solveParsedArgs(parsed_args):
             # Genero l'AST
             LuppoloLogger.logInfo("Generating AST")
             astParsedTree = AstGenerator().visit(rawParsedTree)
-            astPdfFilePath = createDigraphPdfFromTree(astParsedTree, "astParsedTree")
+            createDigraphPdfFromTree(astParsedTree, "astParsedTree")
 
             # Converto gli argomenti in espressioni dell'ast
             args = [stringToAstExpr(arg) for arg in args]
@@ -55,7 +54,6 @@ def solveParsedArgs(parsed_args):
 
             # Genero il pdf
             if outputPdf != "none":
-                # TODO: Fixa il caso in cui la generazione pdf non va a buon fine perchè aperto file
                 LuppoloLogger.logInfo("Generating PDF")
                 match outputPdf:
                     case "fullPdf":
@@ -95,11 +93,26 @@ def solveParsedArgs(parsed_args):
             elements = parsed_args.elements
             typeTest = parsed_args.type_test
 
-            LuppoloTester.testGrammar()
+            testG = testI = True
+            if elements == "grammar":
+                testI = False
+            elif elements == "interpreter":
+                testG = False
 
+            validT = erroneousT = True
+            if typeTest == "valid":
+                erroneousT = False
+            elif typeTest == "erroneous":
+                validT = False
 
+            # Eseguo i test
+            LuppoloLogger.logInfo("Running requested tests")
+            if testG:
+                LuppoloTester.testGrammar(validT, erroneousT)
+            if testI:
+                LuppoloTester.testInterpreter(validT, erroneousT)
 
-
+            LuppoloLogger.logInfo("Tests completed")
         case _:
             print("Command not recognized")
 
@@ -188,7 +201,7 @@ def main():
         "--elements",
         "-e",
         default="all",
-        choices=["all", "ast", "grammar", "interpreter"],
+        choices=["all", "grammar", "interpreter"],
         help="The elements to test. Default value is 'all'"
     )
 
