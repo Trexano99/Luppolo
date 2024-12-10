@@ -47,6 +47,11 @@ class LuppoloLogger(logging.Logger):
             log_file.write('')
 
     @staticmethod
+    def getLogger():
+        ''' This method returns the logger. '''
+        return LuppoloLogger.__logger
+
+    @staticmethod
     def setCustomLogger(logger):
         ''' This method sets a custom logger for the LuppoloLogger class. '''
         LuppoloLogger.__logger = logger
