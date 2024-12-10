@@ -1,21 +1,17 @@
 import argparse, os
 
 from antlr4 import InputStream, CommonTokenStream
+from antlr4.tree.Trees import Trees
 
 from src.utils.LuppoloLogger import LuppoloLogger
 from src.utils.Converter import stringToAstExpr
-from src.utils.ExprToPdf import generatePdf
+from src.utils.ExprToPdf import generateResultPdf, createDigraphPdfFromTree
 from src.grammar.LuppoloGrammar import LuppoloGrammar
 from src.grammar.AntlrGrammarCompiler import AntlrGrammarCompiler
 from src.interpreter.interpreter import LuppoloInterpreter
 from src.ast.AstGenerator import AstGenerator
-from antlr4.tree.Trees import Trees
 
-def run(args):
-    '''
-    This method is executed when the `run` command is called from the command line.
-    '''
-    print(f"Running with arguments: {args}")
+from test.LuppoloTester import LuppoloTester
 
 def solveParsedArgs(parsed_args):
     match parsed_args.command:
@@ -42,18 +38,19 @@ def solveParsedArgs(parsed_args):
 
             # Effettuo il parsing del file sorgente
             LuppoloLogger.logInfo("Parsing the input")
-            rawTree = parser.program()
+            rawParsedTree = parser.program()
 
             # Genero l'AST
             LuppoloLogger.logInfo("Generating AST")
-            astTree = AstGenerator().visit(rawTree)
+            astParsedTree = AstGenerator().visit(rawParsedTree)
+            astPdfFilePath = createDigraphPdfFromTree(astParsedTree, "astParsedTree")
 
             # Converto gli argomenti in espressioni dell'ast
             args = [stringToAstExpr(arg) for arg in args]
 
             # Interpreto il programma
             LuppoloLogger.logInfo("Interpreting the program")
-            interpreter = LuppoloInterpreter(astTree.children)
+            interpreter = LuppoloInterpreter(astParsedTree.children)
             result = interpreter.interpretFunc(mainFunc, args)
 
             # Genero il pdf
@@ -62,13 +59,13 @@ def solveParsedArgs(parsed_args):
                 LuppoloLogger.logInfo("Generating PDF")
                 match outputPdf:
                     case "fullPdf":
-                        pathFile = generatePdf(result)
+                        pathFile = generateResultPdf(result)
                     case "onlyLatex":
-                        pathFile = generatePdf(result, includeThreeGraph=False, includeRaw=False)
+                        pathFile = generateResultPdf(result, includeThreeGraph=False, includeRaw=False)
                     case "onlyGraph":
-                        pathFile = generatePdf(result, includeLatex=False, includeRaw=False)
+                        pathFile = generateResultPdf(result, includeLatex=False, includeRaw=False)
                     case "onlyRaw":
-                        pathFile = generatePdf(result, includeLatex=False, includeThreeGraph=False)
+                        pathFile = generateResultPdf(result, includeLatex=False, includeThreeGraph=False)
                 if showPdf:
                     LuppoloLogger.logInfo("Showing PDF")
                     os.system(f"start {pathFile}")
@@ -91,6 +88,17 @@ def solveParsedArgs(parsed_args):
             # Controllo se il path del jar di antlr è stato specificato
             LuppoloLogger.logInfo("Compiling grammar using syntax file: "+syntaxFilePath+" and antlr jar: "+antlrJarPath)
             AntlrGrammarCompiler.compileGrammar(syntaxFilePath=syntaxFilePath, antlrJarPath=antlrJarPath)
+
+        case "test":
+
+            # Estraggo gli argomenti
+            elements = parsed_args.elements
+            typeTest = parsed_args.type_test
+
+            LuppoloTester.testGrammar()
+
+
+
 
         case _:
             print("Command not recognized")
@@ -171,6 +179,24 @@ def main():
         default="%ANTLR4_JAR%",
         nargs="*",
         help="The path of the ANTLR4 jar file. Default value is '%ANTLR4_JAR%'"
+    )
+
+    # Definisco il comando test per eseguire i test
+    test_parser = subparsers.add_parser("test", help="Run the Luppolo tests")
+
+    test_parser.add_argument(
+        "--elements",
+        "-e",
+        default="all",
+        choices=["all", "ast", "grammar", "interpreter"],
+        help="The elements to test. Default value is 'all'"
+    )
+
+    test_parser.add_argument(
+        "--type-test",
+        "-tt",
+        default="all",
+        choices=["all", "valid", "erroneous"],
     )
 
 
