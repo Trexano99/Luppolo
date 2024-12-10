@@ -86,7 +86,7 @@ class LuppoloInterpreter:
             LuppoloLogger.logError(f"Function {funcName} has multiple parameters with the same name. Ambiguity is not allowed.")
             raise LuppoloInterpException(funcMem)
         
-        if not all([isinstance(param, BaseExpr) or isinstance(param, FuncCall) for param in params]):
+        if not all([isinstance(param, BaseExpr) or isinstance(param, FuncCall) or isinstance(param, BaseLuppExpr) for param in params]):
             LuppoloLogger.logError(f"Function {funcName} must be called with AST expressions as parameters.")
             raise LuppoloInterpException(funcMem)
 
