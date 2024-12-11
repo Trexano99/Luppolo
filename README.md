@@ -59,7 +59,7 @@ Infine la classe [ExprToPdf](src/utils/ExprToPdf.py) permette la generazione di 
 - **PYTHON 3.10.11**<br>
   Il progetto è stato sviluppato utilizzando Python 3.10.11. Se non si possiede Python è possibile scaricarlo dal [sito ufficiale](https://www.python.org/downloads/).<br>
 
-- **ANTLR4**<br>
+- **ANTLR4 (V4.13.2)**<br>
   Il progetto utilizza ANTLR4 per la generazione del Lexer e del Parser. Per installare ANTLR4 è possibile seguire la guida ufficiale disponibile al seguente [link](https://www.antlr.org/download.html).<br>
   Si consiglia di impostare `%ANTLR4_JAR%` come variabile d'ambiente contenente il path del jar di antlr4, altrimenti è necessario specificare il path del jar di antlr4 in fase di compilazione della grammatica. Vedi sezione [guida all'utilizzo](#guida-allutilizzo) per ulteriori informazioni.<br>
 
@@ -90,7 +90,15 @@ python -m src.main compile
 Per approfondimenti vedere la guida aggiungendo `--help` alla fine del comando.
 
 #### Compilazione manuale
-Per la compilazione manuale è necessario utilizzare il jar di antlr4 attraverso comando `java -jar [YOUR ANTLR_JAR] -Dlanguage=Python3 -visitor -o bin/ grammar\syntax\luppolo.g`.
+Per la compilazione manuale è necessario utilizzare il jar di antlr4 attraverso il comando:
+```bash
+java -jar [YOUR ANTLR_JAR] -Dlanguage=Python3 -visitor -o ../bin/ src/grammar/syntax/luppolo.g
+```
+oppure:
+```bash
+cd src
+antlr4 -Dlanguage=Python3 -visitor -o ../bin/ src/grammar/syntax/luppolo.g
+```
 
 <br>
 
@@ -104,7 +112,7 @@ Oltre al file sorgente è possibile specificare (se necessario) i parametri in f
 Di default il comando produce un file pdf contenente l'espressione risultante dall'interpretazione del programma e questa viene fornita sotto forma di albero, in formato LaTeX e in formato testuale. Vedi la sezione [Rappresentazione](#rappresentazione) per ulteriori informazioni.<br><br>
 Per eseguire l'interprete è possibile utilizzare il comando `run` come segue:
 ```bash
-python -m src.main run ./path/to/sorgente/sorgente.lp [param1] [param2] ...
+python3 -m src.main run ./path/to/sorgente/sorgente.lp [param1] [param2] ...
 ```
 
 Il comando mette a disposizioni una serie di opzioni che permettono ad esempio di specificare la funzione principale, di scegliere il formato del file pdf generato,  di scegliere il tipo di output da dare in console, di specificare il livello di logging e altro.<br>
